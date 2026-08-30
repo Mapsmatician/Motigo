@@ -186,3 +186,28 @@ export async function deleteUserFromDbByAdmin(userId) {
     }
   }
 }
+
+export async function purgeUserByEmailFromDb(targetEmail) {
+  if (!targetEmail) return;
+  const lowerEmail = targetEmail.toLowerCase().trim();
+
+  // 1. Remove from local cache
+  try {
+    let list = JSON.parse(localStorage.getItem('motigo_registered_users') || '[]');
+    list = list.filter(u => u.email && u.email.toLowerCase().trim() !== lowerEmail);
+    localStorage.setItem('motigo_registered_users', JSON.stringify(list));
+  } catch (e) {}
+
+  // 2. Query and delete from Firestore
+  if (db) {
+    try {
+      const snap1 = await db.collection('users').where('email', '==', lowerEmail).get();
+      snap1.forEach(doc => doc.ref.delete());
+
+      const snap2 = await db.collection('admin_user_registry').where('email', '==', lowerEmail).get();
+      snap2.forEach(doc => doc.ref.delete());
+    } catch (err) {
+      console.warn('Could not purge email from Firestore:', err);
+    }
+  }
+}

@@ -1,5 +1,6 @@
 // Motigo — Firebase Authentication Wrapper
 import { auth, db } from './firebase.js';
+import { purgeUserByEmailFromDb } from './db.js';
 
 export function recordUserRegistration(userProfile) {
   try {
@@ -21,6 +22,12 @@ export function recordUserRegistration(userProfile) {
  */
 export async function signUpUser(email, password, firstName, lastName, phone = '') {
   if (!email) throw new Error('Please enter a valid email address');
+  
+  // Wipe any existing/deleted records matching this email first
+  try {
+    await purgeUserByEmailFromDb(email);
+  } catch (e) {}
+
   let userCredential;
 
   if (auth) {
