@@ -134,3 +134,13 @@ export async function getAllUsersForAdmin() {
     return [];
   }
 }
+
+export async function deleteUserFromDbByAdmin(userId) {
+  if (!userId || !db) return;
+  try {
+    await db.collection('users').doc(userId).delete();
+  } catch (err) {
+    console.error('Error deleting user from Firestore:', err);
+    throw err;
+  }
+}

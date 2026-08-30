@@ -10,11 +10,12 @@ import {
   listenToNotifications, 
   saveNotificationToDb, 
   updateUserProfile,
-  getAllUsersForAdmin 
+  getAllUsersForAdmin,
+  deleteUserFromDbByAdmin
 } from './db.js';
 
-// Admin user registry — updated from Firestore or fallback mock
-export let adminUserRegistry = JSON.parse(JSON.stringify(mockUserRegistry));
+// Admin user registry — populated dynamically from Firestore registered users
+export let adminUserRegistry = [];
 
 class StateStore {
   constructor() {
@@ -118,9 +119,19 @@ class StateStore {
 
   async loadAdminData() {
     const firestoreUsers = await getAllUsersForAdmin();
-    if (firestoreUsers && firestoreUsers.length > 0) {
-      adminUserRegistry = firestoreUsers;
+    adminUserRegistry = firestoreUsers || [];
+    this.notify();
+  }
+
+  async deleteUserByAdmin(userId) {
+    try {
+      await deleteUserFromDbByAdmin(userId);
+      adminUserRegistry = adminUserRegistry.filter(u => u.id !== userId);
       this.notify();
+      return true;
+    } catch (err) {
+      console.error('Delete user error:', err);
+      return false;
     }
   }
 

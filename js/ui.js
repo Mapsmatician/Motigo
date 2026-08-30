@@ -622,7 +622,10 @@ export class UIRenderer {
             : '<span class="admin-status-badge badge-inactive">○ Inactive</span>' }
         </td>
         <td style="padding:14px 16px;">
-          <button class="btn btn-sm btn-secondary admin-expand-btn" style="font-size:12px;" data-uid="${u.id}">View ▾</button>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-sm btn-secondary admin-expand-btn" style="font-size:12px;" data-uid="${u.id}">View ▾</button>
+            <button class="btn btn-sm admin-delete-user-btn" style="font-size:12px;background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.4);" data-uid="${u.id}" data-name="${u.firstName} ${u.lastName}">🗑️ Delete</button>
+          </div>
         </td>
       </tr>
       <tr class="admin-vehicle-detail-row" id="detail-${u.id}" style="display:none;">
@@ -876,6 +879,24 @@ export class UIRenderer {
         detailRow.style.display = isOpen ? 'none' : 'table-row';
         btn.textContent = isOpen ? 'View ▾' : 'Hide ▴';
         btn.style.color = isOpen ? '' : '#f59e0b';
+      });
+    });
+
+    // Delete user handler
+    document.querySelectorAll('.admin-delete-user-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const uid = btn.dataset.uid;
+        const name = btn.dataset.name || 'this user';
+        if (confirm(`Are you sure you want to permanently delete registered user "${name}" from Motigo?`)) {
+          btn.disabled = true;
+          btn.textContent = 'Deleting...';
+          const success = await store.deleteUserByAdmin(uid);
+          if (!success) {
+            alert('Could not delete user. Please check database permissions.');
+            btn.disabled = false;
+            btn.textContent = '🗑️ Delete';
+          }
+        }
       });
     });
   }
