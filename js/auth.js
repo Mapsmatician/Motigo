@@ -21,7 +21,16 @@ export function recordUserRegistration(userProfile) {
  */
 export async function signUpUser(email, password, firstName, lastName, phone = '') {
   if (!auth) throw new Error('Firebase Auth unavailable');
-  const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+  let userCredential;
+  try {
+    userCredential = await auth.createUserWithEmailAndPassword(email, password);
+  } catch (authErr) {
+    if (authErr.code === 'auth/email-already-in-use') {
+      return await signInUser(email, password);
+    }
+    throw authErr;
+  }
+
   const user = userCredential.user;
 
   const profileData = {
@@ -60,13 +69,43 @@ export async function signInUser(email, password) {
   const userCredential = await auth.signInWithEmailAndPassword(email, password);
   const user = userCredential.user;
 
+  const profileData = {
+    id: user.uid,
+    firstName: email.split('@')[0],
+    lastName: '',
+    email: email,
+    phone: '',
+    currency: 'NGN',
+    currencySymbol: '₦',
+    distanceUnit: 'km',
+    createdAt: new Date().toISOString(),
+    lastLoginAt: new Date().toISOString(),
+    isVerified: true
+  };
+
   try {
-    if (db) await db.collection('users').doc(user.uid).update({ lastLoginAt: new Date().toISOString() });
+    if (db) {
+      const userRef = db.collection('users').doc(user.uid);
+      const doc = await userRef.get();
+      if (!doc.exists) {
+        await userRef.set(profileData, { merge: true });
+        await db.collection('admin_user_registry').doc(user.uid).set(profileData, { merge: true });
+        recordUserRegistration(profileData);
+      } else {
+        const existingData = doc.data() || {};
+        const updated = { ...profileData, ...existingData, lastLoginAt: new Date().toISOString() };
+        await userRef.update({ lastLoginAt: new Date().toISOString() });
+        await db.collection('admin_user_registry').doc(user.uid).set(updated, { merge: true });
+        recordUserRegistration(updated);
+      }
+    } else {
+      recordUserRegistration(profileData);
+    }
   } catch (err) {
-    console.warn('Could not update lastLoginAt:', err);
+    console.warn('Profile sync error on login:', err);
   }
 
-  return user;
+  return { user, profile: profileData };
 }
 
 /**

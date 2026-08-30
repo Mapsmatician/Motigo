@@ -44,39 +44,43 @@ class StateStore {
       if (firebaseUser) {
         this.isLoggedIn = true;
         this.isAdmin = isAdmin;
+        localStorage.setItem('motigo_auth_session', isAdmin ? 'admin' : 'user');
+
         if (isAdmin) {
           this.adminUser = adminData;
+          this.activeView = 'admin-dashboard';
+          this.loadAdminData();
+        } else {
+          this.user = {
+            id: firebaseUser.uid,
+            firstName: profile?.firstName || firebaseUser.displayName || 'User',
+            lastName: profile?.lastName || '',
+            email: firebaseUser.email,
+            phone: profile?.phone || '',
+            currency: profile?.currency || 'NGN',
+            currencySymbol: profile?.currencySymbol || '₦',
+            distanceUnit: profile?.distanceUnit || 'km',
+            avatar: profile?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+            isVerified: true
+          };
+          this.attachDbListeners(firebaseUser.uid);
+        }
+      } else {
+        const activeSession = localStorage.getItem('motigo_auth_session');
+        if (!activeSession && !this.isAdmin) {
+          this.isLoggedIn = false;
+          this.isAdmin = false;
+          this.adminUser = null;
+          this.detachDbListeners();
+          if (!['login', 'register', 'verify-email'].includes(this.activeView)) {
+            this.activeView = 'landing';
+          }
+        } else if (this.isAdmin) {
+          this.activeView = 'admin-dashboard';
           this.loadAdminData();
         }
-
-        this.user = {
-          id: firebaseUser.uid,
-          firstName: profile?.firstName || firebaseUser.displayName || 'User',
-          lastName: profile?.lastName || '',
-          email: firebaseUser.email,
-          phone: profile?.phone || '',
-          currency: profile?.currency || 'NGN',
-          currencySymbol: profile?.currencySymbol || '₦',
-          distanceUnit: profile?.distanceUnit || 'km',
-          avatar: profile?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-          isVerified: true
-        };
-
-        // Attach Firestore Real-Time Snapshot Listeners
-        this.attachDbListeners(firebaseUser.uid);
-      } else {
-        this.isLoggedIn = false;
-        this.isAdmin = false;
-        this.adminUser = null;
-        this.user = { ...initialUser };
-        this.detachDbListeners();
-        this.vehicles = [];
-        this.records = [];
-        this.notifications = [];
-        if (!['login', 'register', 'verify-email'].includes(this.activeView)) {
-          this.activeView = 'landing';
-        }
       }
+      this.saveState();
       this.notify();
     });
   }
@@ -425,12 +429,14 @@ class StateStore {
   }
 
   async logoutUser() {
+    localStorage.removeItem('motigo_auth_session');
     this.detachDbListeners();
     this.isLoggedIn = false;
     this.isAdmin = false;
     this.adminUser = null;
     this.activeView = 'landing';
     await signOutUser();
+    this.saveState();
     this.notify();
   }
 
