@@ -68,6 +68,9 @@ class StateStore {
         this.vehicles = [];
         this.records = [];
         this.notifications = [];
+        if (!['login', 'register', 'verify-email'].includes(this.activeView)) {
+          this.activeView = 'landing';
+        }
       }
       this.notify();
     });

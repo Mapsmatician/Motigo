@@ -29,6 +29,13 @@ export class UIRenderer {
       return;
     }
 
+    // Unauthenticated user routing guard
+    if (!store.isLoggedIn && !['landing', 'login', 'register', 'verify-email'].includes(activeView)) {
+      this.appRoot.innerHTML = this.renderLandingView();
+      this.attachLandingListeners();
+      return;
+    }
+
     // 1. Standalone Full-Screen Views (Landing, Auth, Onboarding)
     if (activeView === 'landing') {
       this.appRoot.innerHTML = this.renderLandingView();
@@ -179,8 +186,8 @@ export class UIRenderer {
 
             <!-- User Profile -->
             <div class="user-profile-btn" id="header-user-btn" title="User Settings">
-              <img src="${store.user.avatar}" alt="Avatar" class="user-avatar" />
-              <span class="user-name">${store.user.firstName}</span>
+              <img src="${store.user ? (store.user.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80') : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80'}" alt="Avatar" class="user-avatar" />
+              <span class="user-name">${store.user ? store.user.firstName : 'User'}</span>
             </div>
           </div>
         </header>
