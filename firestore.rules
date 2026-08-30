@@ -25,5 +25,11 @@ service cloud.firestore {
       allow read: if true;
       allow write: if request.auth != null;
     }
+
+    // Trigger Email from Firestore (Firebase Extension)
+    match /mail/{mailId} {
+      allow create: if true;
+      allow read, write: if request.auth != null;
+    }
   }
 }

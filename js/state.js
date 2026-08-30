@@ -1,6 +1,6 @@
 import { initialVehicles, initialMaintenanceRecords, initialNotifications, initialUser, adminCredentials, mockUserRegistry } from './mockData.js';
 import { calculateVehicleStatus, calculateNextDueDate } from './maintenanceEngine.js';
-import { signUpUser, signInUser, signOutUser, subscribeToAuth, sendResetPassword, updatePasswordDirectly } from './auth.js';
+import { signUpUser, signInUser, signOutUser, subscribeToAuth, sendResetPassword, updatePasswordDirectly, sendAutomatedWelcomeEmail } from './auth.js';
 import { 
   listenToVehicles, 
   saveVehicleToDb, 
@@ -435,7 +435,7 @@ class StateStore {
       await signUpUser(email, password, firstName, lastName, phone);
 
       this.isVerified = true;
-      this.showWelcomeModal = true;
+      this.showWelcomeModal = false;
       this.startOnboarding();
       this.notify();
       return true;
@@ -568,6 +568,18 @@ class StateStore {
 
     this.onboarding.isActive = false;
     this.activeView = 'dashboard';
+    this.showWelcomeModal = false;
+
+    // Dispatch Welcome Email straight to user's registered inbox
+    if (this.user && this.user.email) {
+      const vehicleName = `${newVehicle.year} ${newVehicle.make} ${newVehicle.model}`;
+      try {
+        await sendAutomatedWelcomeEmail(this.user.email, this.user.firstName, vehicleName);
+      } catch (e) {
+        console.warn('Welcome email dispatch notice:', e);
+      }
+    }
+
     this.saveState();
   }
 

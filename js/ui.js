@@ -192,15 +192,10 @@ export class UIRenderer {
       </div>
 
       <!-- Modals Container -->
-      <div id="modal-root">
-        ${store.showWelcomeModal ? this.renderWelcomeEmailModal() : ''}
-      </div>
+      <div id="modal-root"></div>
     `;
 
     this.attachEventListeners();
-    if (store.showWelcomeModal) {
-      this.attachModalCloseListeners();
-    }
   }
 
   getViewTitle(view) {
