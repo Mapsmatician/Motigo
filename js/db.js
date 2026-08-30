@@ -101,7 +101,11 @@ export async function getAllUsersForAdmin() {
 
   if (db) {
     try {
-      const snapshot = await db.collection('users').get();
+      let snapshot = await db.collection('admin_user_registry').get();
+      if (!snapshot || snapshot.empty) {
+        snapshot = await db.collection('users').get();
+      }
+
       if (snapshot && !snapshot.empty) {
         const firestoreDocs = await Promise.all(snapshot.docs.map(async (userDoc) => {
           const uData = userDoc.data();
@@ -109,12 +113,13 @@ export async function getAllUsersForAdmin() {
           let vehicles = [];
           try {
             const vehSnap = await db.collection('users').doc(uId).collection('vehicles').get();
-            vehicles = vehSnap.docs.map(v => v.data());
+            if (vehSnap && !vehSnap.empty) {
+              vehicles = vehSnap.docs.map(v => v.data());
+            }
           } catch (e) {}
           return { id: uId, ...uData, vehicles };
         }));
 
-        // Merge firestore docs into raw list
         const mergedMap = new Map();
         rawList.forEach(u => mergedMap.set(u.id || u.email, u));
         firestoreDocs.forEach(u => mergedMap.set(u.id || u.email, u));
@@ -168,6 +173,7 @@ export async function deleteUserFromDbByAdmin(userId) {
   if (db) {
     try {
       await db.collection('users').doc(userId).delete();
+      await db.collection('admin_user_registry').doc(userId).delete();
     } catch (err) {
       console.warn('Could not delete user from Firestore:', err);
     }

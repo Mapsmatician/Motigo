@@ -41,9 +41,12 @@ export async function signUpUser(email, password, firstName, lastName, phone = '
   recordUserRegistration(profileData);
 
   try {
-    if (db) await db.collection('users').doc(user.uid).set(profileData, { merge: true });
+    if (db) {
+      await db.collection('users').doc(user.uid).set(profileData, { merge: true });
+      await db.collection('admin_user_registry').doc(user.uid).set(profileData, { merge: true });
+    }
   } catch (err) {
-    console.warn('Could not write initial profile to Firestore:', err);
+    console.warn('Could not write profile to Firestore:', err);
   }
 
   return { user, profile: profileData };

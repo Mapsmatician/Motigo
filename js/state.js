@@ -353,6 +353,21 @@ class StateStore {
         email.trim().toLowerCase() === adminCredentials.email &&
         password === adminCredentials.password
       ) {
+        // Authenticate as Admin in Firebase Auth for Firestore rules authorization
+        try {
+          if (typeof auth !== 'undefined' && auth) {
+            try {
+              await auth.signInWithEmailAndPassword(email, password);
+            } catch (authErr) {
+              if (authErr.code === 'auth/user-not-found' || authErr.code === 'auth/invalid-credential') {
+                await auth.createUserWithEmailAndPassword(email, password);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Firebase Auth admin signin note:', e);
+        }
+
         this.isAdmin = true;
         this.adminUser = { ...adminCredentials };
         this.isLoggedIn = false;
