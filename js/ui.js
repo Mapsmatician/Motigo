@@ -28,7 +28,7 @@ export class UIRenderer {
     }
 
     // Unauthenticated user routing guard
-    if (!store.isLoggedIn && !['landing', 'login', 'register', 'verify-email'].includes(activeView)) {
+    if (!store.isLoggedIn && !['landing', 'login', 'register'].includes(activeView)) {
       this.appRoot.innerHTML = this.renderLandingView();
       this.attachLandingListeners();
       return;
@@ -49,12 +49,6 @@ export class UIRenderer {
 
     if (activeView === 'login') {
       this.appRoot.innerHTML = this.renderLoginView();
-      this.attachAuthListeners();
-      return;
-    }
-
-    if (activeView === 'verify-email') {
-      this.appRoot.innerHTML = this.renderVerifyEmailView();
       this.attachAuthListeners();
       return;
     }
@@ -448,7 +442,7 @@ export class UIRenderer {
   }
 
   // =========================================================================
-  // 2. AUTHENTICATION VIEWS (Register, Login, Email Verification)
+  // 2. AUTHENTICATION VIEWS (Register, Login)
   // =========================================================================
   renderRegisterView() {
     return `
@@ -733,43 +727,6 @@ export class UIRenderer {
     `;
   }
 
-  renderVerifyEmailView() {
-    const userEmail = store.user?.email || 'your email';
-
-    return `
-      <div class="auth-page-wrapper">
-        <div class="auth-card" style="text-align: center; max-width: 480px;">
-          <div style="font-size: 48px; margin-bottom: 12px;">✉️</div>
-          <h2 style="font-size: 24px; font-weight: 800; color: #ffffff;">Verify Your Email</h2>
-          <p style="font-size: 14px; color: var(--text-secondary); margin: 8px 0 24px; line-height: 1.6;">
-            We've sent a 6-digit confirmation code to <strong>${userEmail}</strong>. Please check your email inbox, copy the code, and enter it below.
-          </p>
-
-          <div id="verify-code-error" style="display:none; color:#fca5a5; font-size:13px; margin-bottom:16px; padding: 10px 12px; background: rgba(239,68,68,0.15); border-radius: 8px; border: 1px solid rgba(239,68,68,0.4);">
-          </div>
-
-          <!-- Blank Editable 6-Digit Code Input Boxes -->
-          <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 24px;" id="verify-digit-container">
-            <input type="text" maxlength="1" class="form-control code-digit-input" data-index="0" style="width: 46px; height: 50px; text-align: center; font-size: 22px; font-weight: 800; background: #0b0f19; color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); border-radius: 10px;" autofocus />
-            <input type="text" maxlength="1" class="form-control code-digit-input" data-index="1" style="width: 46px; height: 50px; text-align: center; font-size: 22px; font-weight: 800; background: #0b0f19; color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); border-radius: 10px;" />
-            <input type="text" maxlength="1" class="form-control code-digit-input" data-index="2" style="width: 46px; height: 50px; text-align: center; font-size: 22px; font-weight: 800; background: #0b0f19; color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); border-radius: 10px;" />
-            <input type="text" maxlength="1" class="form-control code-digit-input" data-index="3" style="width: 46px; height: 50px; text-align: center; font-size: 22px; font-weight: 800; background: #0b0f19; color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); border-radius: 10px;" />
-            <input type="text" maxlength="1" class="form-control code-digit-input" data-index="4" style="width: 46px; height: 50px; text-align: center; font-size: 22px; font-weight: 800; background: #0b0f19; color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); border-radius: 10px;" />
-            <input type="text" maxlength="1" class="form-control code-digit-input" data-index="5" style="width: 46px; height: 50px; text-align: center; font-size: 22px; font-weight: 800; background: #0b0f19; color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); border-radius: 10px;" />
-          </div>
-
-          <button class="btn btn-primary" id="btn-confirm-verify" style="width: 100%; font-size: 15px; padding: 12px;">
-            <span>Verify & Continue to Setup →</span>
-          </button>
-
-          <div style="margin-top: 18px; font-size: 13px; color: var(--text-muted);">
-            Didn't receive the code? <button type="button" id="btn-resend-code" style="background: none; border: none; color: #60a5fa; cursor: pointer; text-decoration: underline; font-weight: 600;">Resend Code</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
   attachAuthListeners() {
     const regForm = document.getElementById('form-register');
     if (regForm) {
@@ -869,84 +826,6 @@ export class UIRenderer {
         const loginForm = document.getElementById('form-login');
         const defaultEmail = loginForm ? (loginForm.querySelector('[name="email"]')?.value || '') : '';
         this.openForgotPasswordModal(defaultEmail);
-      });
-    }
-
-    // Digit input auto-focus navigation
-    const digitInputs = document.querySelectorAll('.code-digit-input');
-    if (digitInputs.length > 0) {
-      digitInputs.forEach((input, idx) => {
-        input.addEventListener('input', (e) => {
-          const val = e.target.value;
-          if (val && idx < digitInputs.length - 1) {
-            digitInputs[idx + 1].focus();
-          }
-        });
-
-        input.addEventListener('keydown', (e) => {
-          if (e.key === 'Backspace' && !e.target.value && idx > 0) {
-            digitInputs[idx - 1].focus();
-          }
-        });
-      });
-    }
-
-    const confirmVerifyBtn = document.getElementById('btn-confirm-verify');
-    if (confirmVerifyBtn) {
-      confirmVerifyBtn.addEventListener('click', () => {
-        const inputs = Array.from(document.querySelectorAll('.code-digit-input'));
-        const enteredCode = inputs.map(inp => inp.value.trim()).join('');
-        const errBox = document.getElementById('verify-code-error');
-
-        const expectedCode = store.verificationCode || '842910';
-
-        if (enteredCode.length < 6) {
-          if (errBox) {
-            errBox.style.display = 'block';
-            errBox.style.background = 'rgba(239, 68, 68, 0.15)';
-            errBox.style.borderColor = 'rgba(239, 68, 68, 0.4)';
-            errBox.style.color = '#fca5a5';
-            errBox.innerHTML = '⚠️ Please enter all 6 digits of your verification code.';
-          }
-          return;
-        }
-
-        if (enteredCode === expectedCode || enteredCode === '842910') {
-          if (errBox) {
-            errBox.style.display = 'block';
-            errBox.style.background = 'rgba(16, 185, 129, 0.15)';
-            errBox.style.borderColor = 'rgba(16, 185, 129, 0.4)';
-            errBox.style.color = '#34d399';
-            errBox.innerHTML = '✅ Code verified successfully! Continuing to vehicle setup...';
-          }
-          setTimeout(() => {
-            store.verifyEmail(enteredCode);
-          }, 800);
-        } else {
-          if (errBox) {
-            errBox.style.display = 'block';
-            errBox.style.background = 'rgba(239, 68, 68, 0.15)';
-            errBox.style.borderColor = 'rgba(239, 68, 68, 0.4)';
-            errBox.style.color = '#fca5a5';
-            errBox.innerHTML = '❌ Incorrect verification code. Please check your email inbox and try again.';
-          }
-        }
-      });
-    }
-
-    const resendBtn = document.getElementById('btn-resend-code');
-    if (resendBtn) {
-      resendBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        store.verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const errBox = document.getElementById('verify-code-error');
-        if (errBox) {
-          errBox.style.display = 'block';
-          errBox.style.background = 'rgba(16, 185, 129, 0.15)';
-          errBox.style.borderColor = 'rgba(16, 185, 129, 0.4)';
-          errBox.style.color = '#34d399';
-          errBox.innerHTML = `📩 A new 6-digit confirmation code has been generated and dispatched to <strong>${store.user?.email || 'your email'}</strong>.`;
-        }
       });
     }
 

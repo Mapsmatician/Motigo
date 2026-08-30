@@ -7,8 +7,8 @@ foreach ($file in $jsFiles) {
     $content = Get-Content -Path $file.FullName -Raw
     $exportedNames = @()
     
-    # Match export function/class/const
-    $matches1 = [regex]::Matches($content, "export\s+(?:function|class|const|let|var)\s+([A-Za-z0-9_$]+)")
+    # Match export function/class/const/async function
+    $matches1 = [regex]::Matches($content, "export\s+(?:async\s+)?(?:function|class|const|let|var)\s+([A-Za-z0-9_$]+)")
     foreach ($m in $matches1) { $exportedNames += $m.Groups[1].Value }
 
     # Match export { a, b }

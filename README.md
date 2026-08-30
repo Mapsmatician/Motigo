@@ -51,6 +51,26 @@ git push -u origin main
 
 ---
 
+## 🔥 Deploying to Firebase Hosting
+
+Your Firebase Hosting configuration (`firebase.json` and `.firebaserc`) is pre-configured for the `motigo-3505f` project.
+
+To deploy directly to Firebase Hosting:
+
+```bash
+# 1. Install / Run Firebase CLI
+npx -y firebase-tools@latest login
+
+# 2. Deploy hosting and firestore rules
+npx -y firebase-tools@latest deploy
+```
+
+Your live site will be available globally at:
+- **`https://motigo-3505f.web.app`**
+- **`https://motigo-3505f.firebaseapp.com`**
+
+---
+
 ## 🌐 Deploying to Netlify
 
 1. Go to **[netlify.com](https://app.netlify.com)** and sign in.

@@ -29,7 +29,6 @@ class StateStore {
     this.adminUser = null;
     this.isAuthLoading = true;
     this.showWelcomeModal = false;
-    this.verificationCode = '';
 
     this.unsubVehicles = null;
     this.unsubRecords = null;
@@ -73,7 +72,7 @@ class StateStore {
           this.isAdmin = false;
           this.adminUser = null;
           this.detachDbListeners();
-          if (!['login', 'register', 'verify-email'].includes(this.activeView)) {
+          if (!['login', 'register'].includes(this.activeView)) {
             this.activeView = 'landing';
           }
         } else if (this.isAdmin) {
@@ -433,24 +432,17 @@ class StateStore {
       const lastName = formData.lastName || '';
       const phone = formData.phone || '';
 
-      // Generate random 6-digit verification code
-      this.verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      await signUpUser(email, password, firstName, lastName, phone);
 
-      await signUpUser(email, password, firstName, lastName, phone, this.verificationCode);
-
-      this.activeView = 'verify-email';
+      this.isVerified = true;
+      this.showWelcomeModal = true;
+      this.startOnboarding();
       this.notify();
       return true;
     } catch (err) {
       console.error('Register error:', err);
       throw err;
     }
-  }
-
-  verifyEmail(code) {
-    this.isVerified = true;
-    this.showWelcomeModal = true;
-    this.startOnboarding();
   }
 
   async logoutUser() {
@@ -521,7 +513,11 @@ class StateStore {
       }
     };
 
-    this.vehicles.unshift(newVehicle);
+    if (this.user && this.user.id) {
+      await saveVehicleToDb(this.user.id, newVehicle);
+    } else {
+      this.vehicles.unshift(newVehicle);
+    }
     this.activeVehicleId = newVehicle.id;
     this.selectedVehicleDetailId = newVehicle.id;
 
@@ -542,7 +538,11 @@ class StateStore {
         documentData: data.documentData || null,
         items: data.serviceItems
       };
-      this.records.unshift(initialRecord);
+      if (this.user && this.user.id) {
+        await saveRecordToDb(this.user.id, initialRecord);
+      } else {
+        this.records.unshift(initialRecord);
+      }
     }
 
     // Add Welcome notification & reminder notification
@@ -765,7 +765,7 @@ class StateStore {
     return { record: newRecord, nextDueDate, nextDueMileage };
   }
 
-  updateSchedule(vehicleId, scheduleData) {
+  async updateSchedule(vehicleId, scheduleData) {
     const veh = this.vehicles.find(v => v.id === vehicleId);
     if (!veh) return;
 
@@ -774,11 +774,14 @@ class StateStore {
     if (scheduleData.nextDueDate) veh.schedule.nextDueDate = scheduleData.nextDueDate;
     if (scheduleData.nextDueMileage) veh.schedule.nextDueMileage = Number(scheduleData.nextDueMileage);
 
+    if (this.user && this.user.id) {
+      await saveVehicleToDb(this.user.id, veh);
+    }
     this.saveState();
   }
 
   // --- Notification Management (Sections 31-33) ---
-  addNotification(notif) {
+  async addNotification(notif) {
     const newNotif = {
       id: 'notif-' + Date.now(),
       userId: this.user.id,
@@ -791,7 +794,11 @@ class StateStore {
       actionRequired: notif.actionRequired || false,
       scheduledDueDate: notif.scheduledDueDate || ''
     };
-    this.notifications.unshift(newNotif);
+    if (this.user && this.user.id) {
+      await saveNotificationToDb(this.user.id, newNotif);
+    } else {
+      this.notifications.unshift(newNotif);
+    }
     this.saveState();
   }
 
@@ -822,8 +829,11 @@ class StateStore {
   }
 
   // --- User Preferences ---
-  updateUserPreferences(prefs) {
+  async updateUserPreferences(prefs) {
     this.user = { ...this.user, ...prefs };
+    if (this.user && this.user.id) {
+      await updateUserProfile(this.user.id, this.user);
+    }
     this.saveState();
   }
 }
