@@ -5,6 +5,7 @@ import { calculateVehicleStatus, formatDisplayDate, calculateMileageDelta } from
 import { aiAssistant } from './aiAssistant.js';
 import { calculateCostMetrics, formatCurrency } from './costAnalytics.js';
 import { maintenanceTypeOptions, vehicleMakesList } from './mockData.js';
+import { buildWhatsAppWelcomeMessage, getWhatsAppWelcomeUrl, openWhatsAppWelcomeMessage } from './auth.js';
 
 export class UIRenderer {
   constructor() {
@@ -472,8 +473,8 @@ export class UIRenderer {
             </div>
 
             <div class="form-group">
-              <label class="form-label">Phone Number (Optional)</label>
-              <input type="tel" class="form-control" name="phone" placeholder="+234 800 000 0000" />
+              <label class="form-label">WhatsApp / Phone Number (Optional)</label>
+              <input type="tel" class="form-control" name="phone" placeholder="e.g. +234 801 234 5678" />
             </div>
 
             <div class="form-row">
@@ -1173,23 +1174,74 @@ export class UIRenderer {
     const targetDate = new Date();
     targetDate.setMonth(targetDate.getMonth() + (Number(data.frequencyMonths) || 6));
     const formattedDate = targetDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    const userFirstName = store.user?.firstName || 'there';
+    const userPhone = store.user?.phone || data.phone || '';
+    const vehicleName = `${data.year || 2022} ${data.make || 'Toyota'} ${data.model || 'Camry'}`;
 
     return `
-      <div style="text-align: center; padding: 24px 10px;">
+      <div style="text-align: center; padding: 20px 10px; max-width: 520px; margin: 0 auto;">
         <div style="font-size: 52px; margin-bottom: 12px;">🎉</div>
         <h2 style="font-size: 28px; font-weight: 800; color: #ffffff;">You're all set!</h2>
         <p style="font-size: 15px; color: var(--text-secondary); margin-top: 6px;">
-          Your <strong>${data.year || 2022} ${data.make || 'Toyota'} ${data.model || 'Camry'}</strong> is ready in Motigo.
+          Your <strong>${vehicleName}</strong> is now set up and ready in Motigo.
         </p>
 
-        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 20px; max-width: 440px; margin: 24px auto; text-align: left;">
-          <div style="font-size: 11px; font-weight: 700; color: #34d399; text-transform: uppercase;">Next Scheduled Maintenance</div>
-          <div style="font-size: 20px; font-weight: 800; color: #ffffff; margin: 6px 0;">${formattedDate}</div>
-          <div style="font-size: 14px; color: var(--text-secondary);">or at <strong>${targetMileage.toLocaleString()} km</strong></div>
-          <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Whichever comes first.</div>
+        <!-- Scheduled maintenance overview -->
+        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 18px; margin: 20px 0; text-align: left;">
+          <div style="font-size: 11px; font-weight: 700; color: #34d399; text-transform: uppercase; letter-spacing: 0.5px;">Next Scheduled Maintenance</div>
+          <div style="font-size: 20px; font-weight: 800; color: #ffffff; margin: 4px 0;">${formattedDate}</div>
+          <div style="font-size: 13px; color: var(--text-secondary);">or at <strong>${targetMileage.toLocaleString()} km</strong> (whichever comes first)</div>
         </div>
 
-        <button class="btn btn-primary" id="btn-ob-go-dashboard" style="font-size: 16px; padding: 14px 36px;">
+        <!-- WhatsApp Welcome Notification Card -->
+        <div style="background: linear-gradient(135deg, rgba(37,211,102,0.12), rgba(18,140,126,0.08)); border: 1px solid rgba(37,211,102,0.35); border-radius: 14px; padding: 18px; text-align: left; margin-bottom: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 22px;">💬</span>
+              <div>
+                <div style="font-size: 14px; font-weight: 800; color: #ffffff;">Welcome Message on WhatsApp</div>
+                <div style="font-size: 12px; color: #86efac;">Get your setup summary & maintenance checklist</div>
+              </div>
+            </div>
+            <span style="background: rgba(37,211,102,0.2); color: #4ade80; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px;">WhatsApp Ready</span>
+          </div>
+
+          <!-- Exact Requested Format Preview -->
+          <div style="background: rgba(11,15,25,0.85); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px; font-size: 12px; color: #e2e8f0; line-height: 1.5; margin-bottom: 14px; max-height: 160px; overflow-y: auto;">
+            <div style="white-space: pre-wrap; font-family: 'Plus Jakarta Sans', sans-serif;">Hi ${userFirstName},
+
+Welcome to Motigo — your car's personal maintenance assistant.
+
+You're all set! Motigo will help you:
+
+🔧 Keep track of your car's maintenance history
+📅 Know when your next service is due
+🔔 Get timely maintenance reminders
+🤖 Ask our AI assistant questions about your car
+
+Your ${vehicleName} is now set up and ready to track.
+
+[Go to My Dashboard →]
+
+Here's to smarter maintenance and fewer surprises on the road.
+
+Welcome to Motigo!</div>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">
+              Confirm WhatsApp Phone Number:
+            </label>
+            <div style="display: flex; gap: 8px;">
+              <input type="tel" id="ob-whatsapp-phone" class="form-control" value="${userPhone}" placeholder="e.g. +234 801 234 5678" style="flex: 1; font-size: 13px;" />
+              <button type="button" id="btn-ob-send-whatsapp" class="btn" style="background: #25D366; color: #ffffff; font-weight: 700; font-size: 13px; padding: 10px 16px; border: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap;">
+                <span>📲 Open in WhatsApp</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-ob-go-dashboard" style="font-size: 16px; padding: 14px 36px; width: 100%;">
           <span>Go to My Dashboard →</span>
         </button>
       </div>
@@ -1271,9 +1323,32 @@ export class UIRenderer {
     const back4 = document.getElementById('btn-ob-back-4');
     if (back4) back4.addEventListener('click', () => store.setOnboardingStep(4));
 
+    const sendWaBtn = document.getElementById('btn-ob-send-whatsapp');
+    if (sendWaBtn) {
+      sendWaBtn.addEventListener('click', () => {
+        const phoneInput = document.getElementById('ob-whatsapp-phone');
+        const phoneVal = phoneInput ? phoneInput.value.trim() : '';
+        if (phoneVal && store.user) {
+          store.user.phone = phoneVal;
+          store.updateUserPreferences({ phone: phoneVal });
+        }
+        const data = store.onboarding?.data || {};
+        const vehicleName = `${data.year || 2022} ${data.make || 'Toyota'} ${data.model || 'Camry'}`;
+        openWhatsAppWelcomeMessage(phoneVal, store.user?.firstName, vehicleName);
+      });
+    }
+
     const goDashBtn = document.getElementById('btn-ob-go-dashboard');
     if (goDashBtn) {
-      goDashBtn.addEventListener('click', () => store.completeOnboarding());
+      goDashBtn.addEventListener('click', () => {
+        const phoneInput = document.getElementById('ob-whatsapp-phone');
+        const phoneVal = phoneInput ? phoneInput.value.trim() : '';
+        if (phoneVal && store.user) {
+          store.user.phone = phoneVal;
+          store.updateUserPreferences({ phone: phoneVal });
+        }
+        store.completeOnboarding();
+      });
     }
   }
 
@@ -3282,9 +3357,13 @@ export class UIRenderer {
   }
 
   renderWelcomeEmailModal() {
-    const user = store.user || { firstName: 'Vehicle Owner', email: 'user@motigo.app' };
+    const user = store.user || { firstName: 'Vehicle Owner', email: 'user@motigo.app', phone: '' };
+    const veh = store.getActiveVehicle() || (store.vehicles && store.vehicles[0]) || { make: 'Toyota', model: 'Camry', year: 2022 };
+    const vehicleName = `${veh.year || ''} ${veh.make || ''} ${veh.model || ''}`.trim() || 'your vehicle';
+    const waUrl = getWhatsAppWelcomeUrl(user.phone, user.firstName, vehicleName);
+
     const subject = encodeURIComponent('Welcome to Motigo — Your Car\'s Personal Maintenance Assistant 🚗');
-    const body = encodeURIComponent(`Hi ${user.firstName},\n\nWelcome to Motigo! We’re thrilled to help you keep your vehicle running smoothly, safely, and cost-effectively.\n\nWith Motigo, you can:\n- Never miss a service with automated date and mileage-based reminders\n- Access personalized vehicle specs and AI-powered diagnostic guidance\n- Maintain a complete service history for higher resale value\n\nGet started by adding your first vehicle to your garage!\n\nBest regards,\nThe Motigo Team`);
+    const body = encodeURIComponent(`Hi ${user.firstName},\n\nWelcome to Motigo! We’re thrilled to help you keep your vehicle running smoothly, safely, and cost-effectively.\n\nWith Motigo, you can:\n- Never miss a service with automated date and mileage-based reminders\n- Access personalized vehicle specs and AI-powered diagnostic guidance\n- Maintain a complete service history for higher resale value\n\nYour ${vehicleName} is now set up and ready to track.\n\nBest regards,\nThe Motigo Team`);
     const mailtoUrl = `mailto:${user.email || ''}?subject=${subject}&body=${body}`;
 
     return `
@@ -3292,28 +3371,32 @@ export class UIRenderer {
         <div class="modal-card" style="max-width:540px; width:90%; background:#0f172a; border:1px solid rgba(59,130,246,0.3); border-radius:16px; padding:0; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
           <div style="background:linear-gradient(135deg, #1e3a8a, #2563eb); padding:24px; text-align:center; color:#fff; position:relative;">
             <button class="modal-close-btn" style="position:absolute; top:16px; right:16px; background:rgba(255,255,255,0.15); border:none; color:#fff; width:32px; height:32px; border-radius:50%; font-size:18px; cursor:pointer;">&times;</button>
-            <div style="font-size:42px; margin-bottom:8px;">📧</div>
-            <h2 style="font-size:22px; font-weight:800; margin:0;">Automated Welcome Email</h2>
-            <p style="font-size:13px; color:#93c5fd; margin-top:4px;">Sent to: <strong>${user.email}</strong></p>
+            <div style="font-size:42px; margin-bottom:8px;">🚗</div>
+            <h2 style="font-size:22px; font-weight:800; margin:0;">Welcome to Motigo!</h2>
+            <p style="font-size:13px; color:#93c5fd; margin-top:4px;">Your personal maintenance assistant is ready</p>
           </div>
 
           <div style="padding:24px; color:#e2e8f0; font-size:14px; line-height:1.6; background:#0b0f19;">
             <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:10px; padding:18px; margin-bottom:20px;">
-              <div style="font-size:12px; color:#60a5fa; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">Subject: Welcome to Motigo 🚗</div>
+              <div style="font-size:12px; color:#60a5fa; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">Welcome Message</div>
               <p style="margin-top:0;">Hi <strong>${user.firstName}</strong>,</p>
-              <p>Welcome to <strong>Motigo</strong>! We’re thrilled to help you keep your vehicle running smoothly, safely, and cost-effectively.</p>
-              <p style="font-weight:700; color:#fff; margin-bottom:6px;">With Motigo, you can:</p>
+              <p>Welcome to <strong>Motigo</strong> — your car's personal maintenance assistant.</p>
+              <p style="font-weight:700; color:#fff; margin-bottom:6px;">You're all set! Motigo will help you:</p>
               <ul style="padding-left:20px; margin-top:0; color:#cbd5e1;">
-                <li>⏰ Never miss a service with automated date & mileage reminders</li>
-                <li>🤖 Access personalized specs & AI-powered diagnostic guidance</li>
-                <li>📜 Maintain a complete service history for higher resale value</li>
+                <li>🔧 Keep track of your car's maintenance history</li>
+                <li>📅 Know when your next service is due</li>
+                <li>🔔 Get timely maintenance reminders</li>
+                <li>🤖 Ask our AI assistant questions about your car</li>
               </ul>
-              <p style="margin-bottom:0;">Get started by adding your first vehicle to your garage!</p>
+              <p style="margin-bottom:0; color:#34d399; font-weight:600;">Your <strong>${vehicleName}</strong> is now set up and ready to track.</p>
             </div>
 
-            <div style="display:flex; gap:12px; justify-content:flex-end; flex-wrap:wrap;">
+            <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+              <a href="${waUrl}" target="_blank" rel="noopener noreferrer" class="btn" style="background:#25D366; color:#fff; font-size:13px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:6px; padding:10px 16px; border-radius:8px;">
+                <span>💬 Open WhatsApp Message</span>
+              </a>
               <a href="${mailtoUrl}" class="btn btn-secondary" style="font-size:13px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
-                <span>📩 Send to My Email Inbox</span>
+                <span>📩 Email Copy</span>
               </a>
               <button class="btn btn-primary modal-close-btn" style="font-size:13px;">
                 <span>Go to My Dashboard →</span>

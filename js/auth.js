@@ -235,3 +235,52 @@ export function sendWelcomeEmail(email, firstName = 'Vehicle Owner') {
   if (!email) return;
   console.log(`Welcome email triggered for ${firstName} (${email})`);
 }
+
+/**
+ * Format and construct WhatsApp Welcome message for onboarded user.
+ */
+export function buildWhatsAppWelcomeMessage(firstName, vehicleName, dashboardUrl) {
+  const name = firstName || 'there';
+  const vName = vehicleName || 'Vehicle';
+  const dashUrl = dashboardUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://motigo-3505f.web.app');
+
+  return `Hi ${name},
+
+Welcome to Motigo — your car's personal maintenance assistant.
+
+You're all set! Motigo will help you:
+
+🔧 Keep track of your car's maintenance history
+📅 Know when your next service is due
+🔔 Get timely maintenance reminders
+🤖 Ask our AI assistant questions about your car
+
+Your ${vName} is now set up and ready to track.
+
+[Go to My Dashboard →] ${dashUrl}
+
+Here's to smarter maintenance and fewer surprises on the road.
+
+Welcome to Motigo!`;
+}
+
+export function getWhatsAppWelcomeUrl(phone, firstName, vehicleName, dashboardUrl) {
+  const text = buildWhatsAppWelcomeMessage(firstName, vehicleName, dashboardUrl);
+  let cleanPhone = (phone || '').replace(/[^0-9]/g, '');
+  if (cleanPhone.startsWith('0') && cleanPhone.length === 11) {
+    cleanPhone = '234' + cleanPhone.slice(1);
+  }
+  const encoded = encodeURIComponent(text);
+  return cleanPhone 
+    ? `https://wa.me/${cleanPhone}?text=${encoded}`
+    : `https://api.whatsapp.com/send?text=${encoded}`;
+}
+
+export function openWhatsAppWelcomeMessage(phone, firstName, vehicleName, dashboardUrl) {
+  const url = getWhatsAppWelcomeUrl(phone, firstName, vehicleName, dashboardUrl);
+  if (typeof window !== 'undefined') {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+  return url;
+}
+
