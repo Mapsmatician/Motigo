@@ -735,10 +735,6 @@ export class UIRenderer {
 
   renderVerifyEmailView() {
     const userEmail = store.user?.email || 'your email';
-    const code = store.verificationCode || '842910';
-    const subject = encodeURIComponent('Your Motigo Email Verification Code 🔒');
-    const body = encodeURIComponent(`Hi ${store.user?.firstName || 'there'},\n\nYour 6-digit Motigo verification code is: ${code}\n\nPlease copy and paste this code on the verification screen to complete your registration.\n\nBest regards,\nThe Motigo Team`);
-    const mailtoUrl = `mailto:${userEmail}?subject=${subject}&body=${body}`;
 
     return `
       <div class="auth-page-wrapper">
