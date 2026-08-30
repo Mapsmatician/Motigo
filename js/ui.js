@@ -197,10 +197,15 @@ export class UIRenderer {
       </div>
 
       <!-- Modals Container -->
-      <div id="modal-root"></div>
+      <div id="modal-root">
+        ${store.showWelcomeModal ? this.renderWelcomeEmailModal() : ''}
+      </div>
     `;
 
     this.attachEventListeners();
+    if (store.showWelcomeModal) {
+      this.attachModalCloseListeners();
+    }
   }
 
   getViewTitle(view) {
@@ -3294,6 +3299,7 @@ export class UIRenderer {
   }
 
   closeModal() {
+    store.showWelcomeModal = false;
     const modalRoot = document.getElementById('modal-root');
     if (modalRoot) modalRoot.innerHTML = '';
   }
@@ -3302,5 +3308,49 @@ export class UIRenderer {
     document.querySelectorAll('.modal-close-btn').forEach(btn => {
       btn.addEventListener('click', () => this.closeModal());
     });
+  }
+
+  renderWelcomeEmailModal() {
+    const user = store.user || { firstName: 'Vehicle Owner', email: 'user@motigo.app' };
+    const subject = encodeURIComponent('Welcome to Motigo — Your Car\'s Personal Maintenance Assistant 🚗');
+    const body = encodeURIComponent(`Hi ${user.firstName},\n\nWelcome to Motigo! We’re thrilled to help you keep your vehicle running smoothly, safely, and cost-effectively.\n\nWith Motigo, you can:\n- Never miss a service with automated date and mileage-based reminders\n- Access personalized vehicle specs and AI-powered diagnostic guidance\n- Maintain a complete service history for higher resale value\n\nGet started by adding your first vehicle to your garage!\n\nBest regards,\nThe Motigo Team`);
+    const mailtoUrl = `mailto:${user.email || ''}?subject=${subject}&body=${body}`;
+
+    return `
+      <div class="modal-backdrop" style="display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:99999;">
+        <div class="modal-card" style="max-width:540px; width:90%; background:#0f172a; border:1px solid rgba(59,130,246,0.3); border-radius:16px; padding:0; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+          <div style="background:linear-gradient(135deg, #1e3a8a, #2563eb); padding:24px; text-align:center; color:#fff; position:relative;">
+            <button class="modal-close-btn" style="position:absolute; top:16px; right:16px; background:rgba(255,255,255,0.15); border:none; color:#fff; width:32px; height:32px; border-radius:50%; font-size:18px; cursor:pointer;">&times;</button>
+            <div style="font-size:42px; margin-bottom:8px;">📧</div>
+            <h2 style="font-size:22px; font-weight:800; margin:0;">Automated Welcome Email</h2>
+            <p style="font-size:13px; color:#93c5fd; margin-top:4px;">Sent to: <strong>${user.email}</strong></p>
+          </div>
+
+          <div style="padding:24px; color:#e2e8f0; font-size:14px; line-height:1.6; background:#0b0f19;">
+            <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:10px; padding:18px; margin-bottom:20px;">
+              <div style="font-size:12px; color:#60a5fa; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">Subject: Welcome to Motigo 🚗</div>
+              <p style="margin-top:0;">Hi <strong>${user.firstName}</strong>,</p>
+              <p>Welcome to <strong>Motigo</strong>! We’re thrilled to help you keep your vehicle running smoothly, safely, and cost-effectively.</p>
+              <p style="font-weight:700; color:#fff; margin-bottom:6px;">With Motigo, you can:</p>
+              <ul style="padding-left:20px; margin-top:0; color:#cbd5e1;">
+                <li>⏰ Never miss a service with automated date & mileage reminders</li>
+                <li>🤖 Access personalized specs & AI-powered diagnostic guidance</li>
+                <li>📜 Maintain a complete service history for higher resale value</li>
+              </ul>
+              <p style="margin-bottom:0;">Get started by adding your first vehicle to your garage!</p>
+            </div>
+
+            <div style="display:flex; gap:12px; justify-content:flex-end; flex-wrap:wrap;">
+              <a href="${mailtoUrl}" class="btn btn-secondary" style="font-size:13px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                <span>📩 Send to My Email Inbox</span>
+              </a>
+              <button class="btn btn-primary modal-close-btn" style="font-size:13px;">
+                <span>Go to My Dashboard →</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
   }
 }

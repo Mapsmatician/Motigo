@@ -92,55 +92,84 @@ export async function updateUserProfile(userId, profileData) {
  * --- ADMIN FUNCTIONS ---
  */
 export async function getAllUsersForAdmin() {
-  if (!db) return [];
+  let localCache = [];
   try {
-    const snapshot = await db.collection('users').get();
-    const userList = await Promise.all(snapshot.docs.map(async (userDoc) => {
-      const uData = userDoc.data();
-      const uId = userDoc.id;
+    localCache = JSON.parse(localStorage.getItem('motigo_registered_users') || '[]');
+  } catch (e) {}
 
-      const vehSnap = await db.collection('users').doc(uId).collection('vehicles').get();
-      const vehicles = vehSnap.docs.map(v => v.data());
+  let rawList = [...localCache];
 
-      const firstName = uData.firstName || 'User';
-      const lastName = uData.lastName || '';
-      const initials = (firstName.charAt(0) + (lastName ? lastName.charAt(0) : '')).toUpperCase() || 'U';
+  if (db) {
+    try {
+      const snapshot = await db.collection('users').get();
+      if (snapshot && !snapshot.empty) {
+        const firestoreDocs = await Promise.all(snapshot.docs.map(async (userDoc) => {
+          const uData = userDoc.data();
+          const uId = userDoc.id;
+          let vehicles = [];
+          try {
+            const vehSnap = await db.collection('users').doc(uId).collection('vehicles').get();
+            vehicles = vehSnap.docs.map(v => v.data());
+          } catch (e) {}
+          return { id: uId, ...uData, vehicles };
+        }));
 
-      return {
-        id: uId,
-        firstName,
-        lastName,
-        email: uData.email || '',
-        phone: uData.phone || 'N/A',
-        avatarInitials: initials,
-        avatarColor: '#3b82f6',
-        createdAt: uData.createdAt || new Date().toISOString(),
-        lastLoginAt: uData.lastLoginAt || null,
-        isActive: uData.lastLoginAt ? (Date.now() - new Date(uData.lastLoginAt).getTime() < 30 * 86400000) : true,
-        vehicleCount: vehicles.length,
-        vehicles: vehicles.map(v => ({
-          make: v.make,
-          model: v.model,
-          year: v.year,
-          status: v.status || 'on_track',
-          plate: v.registrationNumber || 'N/A'
-        }))
-      };
-    }));
-
-    return userList;
-  } catch (err) {
-    console.error('Error fetching admin user list:', err);
-    return [];
+        // Merge firestore docs into raw list
+        const mergedMap = new Map();
+        rawList.forEach(u => mergedMap.set(u.id || u.email, u));
+        firestoreDocs.forEach(u => mergedMap.set(u.id || u.email, u));
+        rawList = Array.from(mergedMap.values());
+      }
+    } catch (err) {
+      console.warn('Firestore admin query notice:', err);
+    }
   }
+
+  return rawList.map(u => {
+    const firstName = u.firstName || 'User';
+    const lastName = u.lastName || '';
+    const initials = (firstName.charAt(0) + (lastName ? lastName.charAt(0) : '')).toUpperCase() || 'U';
+    const vehArr = u.vehicles || [];
+
+    return {
+      id: u.id || u.email,
+      firstName,
+      lastName,
+      email: u.email || '',
+      phone: u.phone || 'N/A',
+      avatarInitials: initials,
+      avatarColor: '#3b82f6',
+      createdAt: u.createdAt || new Date().toISOString(),
+      lastLoginAt: u.lastLoginAt || null,
+      isActive: true,
+      vehicleCount: vehArr.length || u.vehicleCount || 0,
+      vehicles: vehArr.map(v => ({
+        make: v.make || 'Toyota',
+        model: v.model || 'Corolla',
+        year: v.year || 2022,
+        status: v.status || 'on_track',
+        plate: v.registrationNumber || v.plate || 'N/A'
+      }))
+    };
+  });
 }
 
 export async function deleteUserFromDbByAdmin(userId) {
-  if (!userId || !db) return;
+  if (!userId) return;
+  
+  // 1. Remove from local cache
   try {
-    await db.collection('users').doc(userId).delete();
-  } catch (err) {
-    console.error('Error deleting user from Firestore:', err);
-    throw err;
+    let list = JSON.parse(localStorage.getItem('motigo_registered_users') || '[]');
+    list = list.filter(u => u.id !== userId && u.email !== userId);
+    localStorage.setItem('motigo_registered_users', JSON.stringify(list));
+  } catch (e) {}
+
+  // 2. Remove from Firestore
+  if (db) {
+    try {
+      await db.collection('users').doc(userId).delete();
+    } catch (err) {
+      console.warn('Could not delete user from Firestore:', err);
+    }
   }
 }

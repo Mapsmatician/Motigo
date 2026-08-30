@@ -28,6 +28,7 @@ class StateStore {
     this.isAdmin = false;
     this.adminUser = null;
     this.isAuthLoading = true;
+    this.showWelcomeModal = false;
 
     this.unsubVehicles = null;
     this.unsubRecords = null;
@@ -355,6 +356,7 @@ class StateStore {
         this.isAdmin = true;
         this.adminUser = { ...adminCredentials };
         this.isLoggedIn = false;
+        await this.loadAdminData();
         this.notify();
         return true;
       }
@@ -403,6 +405,7 @@ class StateStore {
 
   verifyEmail(code) {
     this.isVerified = true;
+    this.showWelcomeModal = true;
     this.startOnboarding();
   }
 

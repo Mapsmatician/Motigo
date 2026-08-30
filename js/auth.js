@@ -1,6 +1,21 @@
 // Motigo — Firebase Authentication Wrapper
 import { auth, db } from './firebase.js';
 
+export function recordUserRegistration(userProfile) {
+  try {
+    let list = JSON.parse(localStorage.getItem('motigo_registered_users') || '[]');
+    const idx = list.findIndex(u => u.id === userProfile.id || u.email === userProfile.email);
+    if (idx >= 0) {
+      list[idx] = { ...list[idx], ...userProfile };
+    } else {
+      list.unshift(userProfile);
+    }
+    localStorage.setItem('motigo_registered_users', JSON.stringify(list));
+  } catch (e) {
+    console.warn('Could not record registration in local cache:', e);
+  }
+}
+
 /**
  * Register a new user with Email/Password and create their profile doc in Firestore.
  */
@@ -22,6 +37,8 @@ export async function signUpUser(email, password, firstName, lastName, phone = '
     lastLoginAt: new Date().toISOString(),
     isVerified: true
   };
+
+  recordUserRegistration(profileData);
 
   try {
     if (db) await db.collection('users').doc(user.uid).set(profileData, { merge: true });
