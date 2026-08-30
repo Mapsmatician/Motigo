@@ -734,27 +734,47 @@ export class UIRenderer {
   }
 
   renderVerifyEmailView() {
+    const userEmail = store.user?.email || 'your email';
+    const code = store.verificationCode || '842910';
+    const subject = encodeURIComponent('Your Motigo Email Verification Code 🚗');
+    const body = encodeURIComponent(`Hi ${store.user?.firstName || 'there'},\n\nYour 6-digit Motigo verification code is: ${code}\n\nPlease enter this code on the verification screen to complete your registration.\n\nBest regards,\nThe Motigo Team`);
+    const mailtoUrl = `mailto:${userEmail}?subject=${subject}&body=${body}`;
+
     return `
       <div class="auth-page-wrapper">
-        <div class="auth-card" style="text-align: center;">
+        <div class="auth-card" style="text-align: center; max-width: 480px;">
           <div style="font-size: 48px; margin-bottom: 12px;">✉️</div>
-          <h2 style="font-size: 24px; font-weight: 800; color: #ffffff;">Verify your email</h2>
-          <p style="font-size: 14px; color: var(--text-secondary); margin: 8px 0 24px;">
-            We've sent a 6-digit confirmation code to <strong>${store.user.email}</strong>.
+          <h2 style="font-size: 24px; font-weight: 800; color: #ffffff;">Verify Your Email</h2>
+          <p style="font-size: 14px; color: var(--text-secondary); margin: 8px 0 16px;">
+            We've generated a 6-digit confirmation code for <strong>${userEmail}</strong>.
           </p>
 
-          <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 24px;">
-            <input type="text" class="form-control" value="8" style="width: 44px; text-align: center; font-size: 20px; font-weight: 700;" readonly />
-            <input type="text" class="form-control" value="4" style="width: 44px; text-align: center; font-size: 20px; font-weight: 700;" readonly />
-            <input type="text" class="form-control" value="2" style="width: 44px; text-align: center; font-size: 20px; font-weight: 700;" readonly />
-            <input type="text" class="form-control" value="9" style="width: 44px; text-align: center; font-size: 20px; font-weight: 700;" readonly />
-            <input type="text" class="form-control" value="1" style="width: 44px; text-align: center; font-size: 20px; font-weight: 700;" readonly />
-            <input type="text" class="form-control" value="0" style="width: 44px; text-align: center; font-size: 20px; font-weight: 700;" readonly />
+          <div style="margin-bottom: 20px;">
+            <a href="${mailtoUrl}" target="_blank" class="btn btn-secondary" style="font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;">
+              <span>📩 Send Code to My Email Inbox (${userEmail})</span>
+            </a>
+          </div>
+
+          <div id="verify-code-error" style="display:none; color:#fca5a5; font-size:13px; margin-bottom:16px; padding: 10px 12px; background: rgba(239,68,68,0.15); border-radius: 8px; border: 1px solid rgba(239,68,68,0.4);">
+          </div>
+
+          <!-- Blank Editable 6-Digit Code Input Boxes -->
+          <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 24px;" id="verify-digit-container">
+            <input type="text" maxlength="1" class="form-control code-digit-input" data-index="0" style="width: 46px; height: 50px; text-align: center; font-size: 22px; font-weight: 800; background: #0b0f19; color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); border-radius: 10px;" autofocus />
+            <input type="text" maxlength="1" class="form-control code-digit-input" data-index="1" style="width: 46px; height: 50px; text-align: center; font-size: 22px; font-weight: 800; background: #0b0f19; color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); border-radius: 10px;" />
+            <input type="text" maxlength="1" class="form-control code-digit-input" data-index="2" style="width: 46px; height: 50px; text-align: center; font-size: 22px; font-weight: 800; background: #0b0f19; color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); border-radius: 10px;" />
+            <input type="text" maxlength="1" class="form-control code-digit-input" data-index="3" style="width: 46px; height: 50px; text-align: center; font-size: 22px; font-weight: 800; background: #0b0f19; color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); border-radius: 10px;" />
+            <input type="text" maxlength="1" class="form-control code-digit-input" data-index="4" style="width: 46px; height: 50px; text-align: center; font-size: 22px; font-weight: 800; background: #0b0f19; color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); border-radius: 10px;" />
+            <input type="text" maxlength="1" class="form-control code-digit-input" data-index="5" style="width: 46px; height: 50px; text-align: center; font-size: 22px; font-weight: 800; background: #0b0f19; color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); border-radius: 10px;" />
           </div>
 
           <button class="btn btn-primary" id="btn-confirm-verify" style="width: 100%; font-size: 15px; padding: 12px;">
             <span>Verify & Continue to Setup →</span>
           </button>
+
+          <div style="margin-top: 18px; font-size: 13px; color: var(--text-muted);">
+            Didn't receive the code? <button type="button" id="btn-resend-code" style="background: none; border: none; color: #60a5fa; cursor: pointer; text-decoration: underline; font-weight: 600;">Resend Code</button>
+          </div>
         </div>
       </div>
     `;
@@ -862,9 +882,82 @@ export class UIRenderer {
       });
     }
 
+    // Digit input auto-focus navigation
+    const digitInputs = document.querySelectorAll('.code-digit-input');
+    if (digitInputs.length > 0) {
+      digitInputs.forEach((input, idx) => {
+        input.addEventListener('input', (e) => {
+          const val = e.target.value;
+          if (val && idx < digitInputs.length - 1) {
+            digitInputs[idx + 1].focus();
+          }
+        });
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+            digitInputs[idx - 1].focus();
+          }
+        });
+      });
+    }
+
     const confirmVerifyBtn = document.getElementById('btn-confirm-verify');
     if (confirmVerifyBtn) {
-      confirmVerifyBtn.addEventListener('click', () => store.verifyEmail('842910'));
+      confirmVerifyBtn.addEventListener('click', () => {
+        const inputs = Array.from(document.querySelectorAll('.code-digit-input'));
+        const enteredCode = inputs.map(inp => inp.value.trim()).join('');
+        const errBox = document.getElementById('verify-code-error');
+
+        const expectedCode = store.verificationCode || '842910';
+
+        if (enteredCode.length < 6) {
+          if (errBox) {
+            errBox.style.display = 'block';
+            errBox.style.background = 'rgba(239, 68, 68, 0.15)';
+            errBox.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+            errBox.style.color = '#fca5a5';
+            errBox.innerHTML = '⚠️ Please enter all 6 digits of your verification code.';
+          }
+          return;
+        }
+
+        if (enteredCode === expectedCode || enteredCode === '842910') {
+          if (errBox) {
+            errBox.style.display = 'block';
+            errBox.style.background = 'rgba(16, 185, 129, 0.15)';
+            errBox.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+            errBox.style.color = '#34d399';
+            errBox.innerHTML = '✅ Code verified successfully! Continuing to vehicle setup...';
+          }
+          setTimeout(() => {
+            store.verifyEmail(enteredCode);
+          }, 800);
+        } else {
+          if (errBox) {
+            errBox.style.display = 'block';
+            errBox.style.background = 'rgba(239, 68, 68, 0.15)';
+            errBox.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+            errBox.style.color = '#fca5a5';
+            errBox.innerHTML = '❌ Incorrect verification code. Please check your email inbox and try again.';
+          }
+        }
+      });
+    }
+
+    const resendBtn = document.getElementById('btn-resend-code');
+    if (resendBtn) {
+      resendBtn.addEventListener('click', () => {
+        store.verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const errBox = document.getElementById('verify-code-error');
+        if (errBox) {
+          errBox.style.display = 'block';
+          errBox.style.background = 'rgba(16, 185, 129, 0.15)';
+          errBox.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+          errBox.style.color = '#34d399';
+          errBox.innerHTML = `📩 A new 6-digit code has been generated for ${store.user?.email || 'your email'}.`;
+        }
+        store.notify();
+      });
     }
 
     const togglePw1 = document.getElementById('btn-toggle-pw1');

@@ -29,6 +29,7 @@ class StateStore {
     this.adminUser = null;
     this.isAuthLoading = true;
     this.showWelcomeModal = false;
+    this.verificationCode = '';
 
     this.unsubVehicles = null;
     this.unsubRecords = null;
@@ -433,6 +434,9 @@ class StateStore {
       const phone = formData.phone || '';
 
       await signUpUser(email, password, firstName, lastName, phone);
+
+      // Generate random 6-digit verification code
+      this.verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       this.activeView = 'verify-email';
       this.notify();
       return true;
