@@ -21,6 +21,7 @@ class StateStore {
     this.STORAGE_KEY = 'motigo_app_state_v3';
     this.STORAGE_KEY_LEGACY = 'motigo_app_state_v2';
     this.CHAT_KEY = 'motigo_ai_chat_v2';
+    this.DEMO_VEHICLE_IDS = ['veh-1', 'veh-2', 'veh-3'];
     this.subscribers = [];
     this._user = { ...initialUser };
     this.isAdmin = false;
@@ -135,7 +136,7 @@ class StateStore {
         const parsed = JSON.parse(saved);
 
         // --- MIGRATION: strip out the three original seeded demo vehicles ---
-        const demoIds = this.DEMO_VEHICLE_IDS;
+        const demoIds = this.DEMO_VEHICLE_IDS || ['veh-1', 'veh-2', 'veh-3'];
         const rawVehicles = parsed.vehicles || initialVehicles;
         const rawRecords = parsed.records || initialMaintenanceRecords;
         const rawNotifs  = parsed.notifications || initialNotifications;
