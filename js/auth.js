@@ -20,7 +20,7 @@ export function recordUserRegistration(userProfile) {
 /**
  * Register a new user with Email/Password and create their profile doc in Firestore.
  */
-export async function signUpUser(email, password, firstName, lastName, phone = '') {
+export async function signUpUser(email, password, firstName, lastName, phone = '', verificationCode = '') {
   if (!email) throw new Error('Please enter a valid email address');
   
   // Wipe any existing/deleted records matching this email first
@@ -77,6 +77,13 @@ export async function signUpUser(email, password, firstName, lastName, phone = '
     sendWelcomeEmail(email, firstName);
   } catch (e) {}
 
+  // Dispatch 6-digit code to user email inbox
+  if (verificationCode) {
+    try {
+      await sendVerificationCodeEmail(email, firstName, verificationCode);
+    } catch (e) {}
+  }
+
   // Trigger Firebase Auth native verification email to inbox
   if (userCredential && userCredential.user && typeof userCredential.user.sendEmailVerification === 'function') {
     try {
@@ -88,6 +95,30 @@ export async function signUpUser(email, password, firstName, lastName, phone = '
   }
 
   return { user, profile: profileData };
+}
+
+export async function sendVerificationCodeEmail(email, firstName, code) {
+  if (!email || !code) return;
+  try {
+    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id: 'service_motigo',
+        template_id: 'template_verification',
+        user_id: 'motigo_public_key',
+        template_params: {
+          to_email: email,
+          to_name: firstName || 'Vehicle Owner',
+          verification_code: code,
+          subject: 'Your Motigo 6-Digit Email Verification Code 🔒'
+        }
+      })
+    });
+    console.log(`Verification code (${code}) email request sent to ${email}, status: ${response.status}`);
+  } catch (err) {
+    console.warn('Email dispatch API notice:', err);
+  }
 }
 
 /**

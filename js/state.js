@@ -433,10 +433,11 @@ class StateStore {
       const lastName = formData.lastName || '';
       const phone = formData.phone || '';
 
-      await signUpUser(email, password, firstName, lastName, phone);
-
       // Generate random 6-digit verification code
       this.verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+      await signUpUser(email, password, firstName, lastName, phone, this.verificationCode);
+
       this.activeView = 'verify-email';
       this.notify();
       return true;
