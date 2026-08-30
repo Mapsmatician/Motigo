@@ -749,8 +749,15 @@ export class UIRenderer {
             We've generated a 6-digit confirmation code for <strong>${userEmail}</strong>.
           </p>
 
-          <div style="margin-bottom: 20px;">
-            <a href="${mailtoUrl}" target="_blank" class="btn btn-secondary" style="font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;">
+          <!-- 6-Digit Code Display Banner -->
+          <div style="background: rgba(15, 23, 42, 0.95); border: 1px dashed rgba(59, 130, 246, 0.5); border-radius: 12px; padding: 14px; margin-bottom: 18px;">
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; font-weight: 700; margin-bottom: 4px;">Verification Code</div>
+            <div style="font-size: 30px; font-weight: 900; letter-spacing: 8px; color: #60a5fa; font-family: monospace;">${code}</div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Enter the 6 digits above into the input boxes below</div>
+          </div>
+
+          <div style="margin-bottom: 18px;">
+            <a href="${mailtoUrl}" target="_blank" class="btn btn-secondary" style="font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;">
               <span>📩 Send Code to My Email Inbox (${userEmail})</span>
             </a>
           </div>
