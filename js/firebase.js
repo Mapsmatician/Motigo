@@ -1,7 +1,4 @@
-// Motigo — Firebase Initialisation (Robust Direct CDN Imports)
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-import { getAuth } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+// Motigo — Firebase Initialisation (Universal Compat Layer)
 
 const firebaseConfig = {
   apiKey: "AIzaSyCtYyuEFPXMSwQmOclFL1-T10wbLP5llzs",
@@ -13,7 +10,22 @@ const firebaseConfig = {
   measurementId: "G-63YV0T0J08"
 };
 
-const app = initializeApp(firebaseConfig);
+let app = null;
+let auth = null;
+let db = null;
 
-export const auth = getAuth(app);
-export const db   = getFirestore(app);
+try {
+  if (typeof window !== 'undefined' && window.firebase) {
+    if (!window.firebase.apps.length) {
+      app = window.firebase.initializeApp(firebaseConfig);
+    } else {
+      app = window.firebase.app();
+    }
+    auth = window.firebase.auth();
+    db = window.firebase.firestore();
+  }
+} catch (e) {
+  console.warn('Firebase init notice:', e);
+}
+
+export { app, auth, db };

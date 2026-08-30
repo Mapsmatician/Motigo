@@ -1,22 +1,12 @@
-// Motigo — Firestore Database CRUD Layer (Robust Direct CDN Imports)
+// Motigo — Firestore Database CRUD Layer (Universal Compat)
 import { db } from './firebase.js';
-import { 
-  collection, 
-  doc, 
-  setDoc, 
-  getDocs, 
-  updateDoc, 
-  deleteDoc, 
-  onSnapshot 
-} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 /**
  * --- VEHICLES ---
  */
 export function listenToVehicles(userId, callback) {
-  if (!userId) return () => {};
-  const vehRef = collection(db, 'users', userId, 'vehicles');
-  return onSnapshot(vehRef, (snapshot) => {
+  if (!userId || !db) return () => {};
+  return db.collection('users').doc(userId).collection('vehicles').onSnapshot((snapshot) => {
     const vehicles = snapshot.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data()
@@ -28,25 +18,24 @@ export function listenToVehicles(userId, callback) {
 }
 
 export async function saveVehicleToDb(userId, vehicle) {
+  if (!userId || !db) return vehicle;
   const vehId = vehicle.id || 'veh-' + Date.now();
-  const vehRef = doc(db, 'users', userId, 'vehicles', vehId);
   const dataToSave = { ...vehicle, id: vehId, userId };
-  await setDoc(vehRef, dataToSave, { merge: true });
+  await db.collection('users').doc(userId).collection('vehicles').doc(vehId).set(dataToSave, { merge: true });
   return dataToSave;
 }
 
 export async function deleteVehicleFromDb(userId, vehicleId) {
-  const vehRef = doc(db, 'users', userId, 'vehicles', vehicleId);
-  await deleteDoc(vehRef);
+  if (!userId || !db) return;
+  await db.collection('users').doc(userId).collection('vehicles').doc(vehicleId).delete();
 }
 
 /**
  * --- MAINTENANCE RECORDS ---
  */
 export function listenToRecords(userId, callback) {
-  if (!userId) return () => {};
-  const recRef = collection(db, 'users', userId, 'records');
-  return onSnapshot(recRef, (snapshot) => {
+  if (!userId || !db) return () => {};
+  return db.collection('users').doc(userId).collection('records').onSnapshot((snapshot) => {
     const records = snapshot.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data()
@@ -59,10 +48,10 @@ export function listenToRecords(userId, callback) {
 }
 
 export async function saveRecordToDb(userId, record) {
+  if (!userId || !db) return record;
   const recId = record.id || 'rec-' + Date.now();
-  const recRef = doc(db, 'users', userId, 'records', recId);
   const dataToSave = { ...record, id: recId, userId };
-  await setDoc(recRef, dataToSave, { merge: true });
+  await db.collection('users').doc(userId).collection('records').doc(recId).set(dataToSave, { merge: true });
   return dataToSave;
 }
 
@@ -70,9 +59,8 @@ export async function saveRecordToDb(userId, record) {
  * --- NOTIFICATIONS ---
  */
 export function listenToNotifications(userId, callback) {
-  if (!userId) return () => {};
-  const notifRef = collection(db, 'users', userId, 'notifications');
-  return onSnapshot(notifRef, (snapshot) => {
+  if (!userId || !db) return () => {};
+  return db.collection('users').doc(userId).collection('notifications').onSnapshot((snapshot) => {
     const notifications = snapshot.docs.map(docSnap => ({
       id: docSnap.id,
       ...docSnap.data()
@@ -85,10 +73,10 @@ export function listenToNotifications(userId, callback) {
 }
 
 export async function saveNotificationToDb(userId, notification) {
+  if (!userId || !db) return notification;
   const notifId = notification.id || 'notif-' + Date.now();
-  const notifRef = doc(db, 'users', userId, 'notifications', notifId);
   const dataToSave = { ...notification, id: notifId, userId };
-  await setDoc(notifRef, dataToSave, { merge: true });
+  await db.collection('users').doc(userId).collection('notifications').doc(notifId).set(dataToSave, { merge: true });
   return dataToSave;
 }
 
@@ -96,24 +84,22 @@ export async function saveNotificationToDb(userId, notification) {
  * --- USER PROFILE ---
  */
 export async function updateUserProfile(userId, profileData) {
-  const userRef = doc(db, 'users', userId);
-  await updateDoc(userRef, profileData);
+  if (!userId || !db) return;
+  await db.collection('users').doc(userId).update(profileData);
 }
 
 /**
  * --- ADMIN FUNCTIONS ---
  */
 export async function getAllUsersForAdmin() {
+  if (!db) return [];
   try {
-    const usersRef = collection(db, 'users');
-    const snapshot = await getDocs(usersRef);
-    
+    const snapshot = await db.collection('users').get();
     const userList = await Promise.all(snapshot.docs.map(async (userDoc) => {
       const uData = userDoc.data();
       const uId = userDoc.id;
 
-      const vehRef = collection(db, 'users', uId, 'vehicles');
-      const vehSnap = await getDocs(vehRef);
+      const vehSnap = await db.collection('users').doc(uId).collection('vehicles').get();
       const vehicles = vehSnap.docs.map(v => v.data());
 
       const firstName = uData.firstName || 'User';
