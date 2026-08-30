@@ -133,6 +133,15 @@ export async function signOutUser() {
 }
 
 /**
+ * Send password reset email via Firebase Auth.
+ */
+export async function sendResetPassword(email) {
+  if (!auth) throw new Error('Firebase Auth unavailable');
+  await auth.sendPasswordResetEmail(email);
+  return true;
+}
+
+/**
  * Listen for auth state changes.
  */
 export function subscribeToAuth(callback) {
