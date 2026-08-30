@@ -14,10 +14,8 @@ export class UIRenderer {
   }
 
   render() {
-    if (!this.appRoot) {
-      this.appRoot = document.getElementById('app-root');
-      if (!this.appRoot) return;
-    }
+    this.appRoot = document.getElementById('app-root');
+    if (!this.appRoot) return;
 
     const activeView = store.activeView;
     const activeVehicle = store.getActiveVehicle();

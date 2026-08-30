@@ -6,7 +6,14 @@
   <title>Motigo — Your car's personal maintenance assistant</title>
   <meta name="description" content="Motigo helps vehicle owners understand, track, schedule and manage vehicle maintenance with automated reminders and personalized AI guidance." />
 
-  <!-- Firebase v10 Compat Libraries (Universal Browser Compatibility) -->
+  <!-- Global Error Handler -->
+  <script>
+    window.addEventListener('error', function(e) {
+      console.error('Motigo Global Error:', e);
+    });
+  </script>
+
+  <!-- Firebase v10 Compat Libraries -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -23,7 +30,19 @@
   <link rel="stylesheet" href="./css/components.css" />
 </head>
 <body>
-  <div id="app-root"></div>
+  <div id="app-root">
+    <!-- Immediate Baseline Skeleton Page -->
+    <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0b0f19; color: #ffffff; font-family: 'Plus Jakarta Sans', sans-serif; text-align: center; padding: 20px;">
+      <div style="font-size: 56px; margin-bottom: 16px;">🚗</div>
+      <h1 style="font-size: 28px; font-weight: 800; margin-bottom: 8px;">Motigo</h1>
+      <p style="font-size: 15px; color: #94a3b8; max-width: 400px; margin-bottom: 24px; line-height: 1.5;">
+        Your car's personal maintenance assistant
+      </p>
+      <div style="display: flex; gap: 8px; align-items: center; font-size: 13px; color: #60a5fa; background: rgba(59, 130, 246, 0.1); padding: 8px 18px; border-radius: 20px; border: 1px solid rgba(59, 130, 246, 0.3);">
+        <span>✨ Loading Motigo...</span>
+      </div>
+    </div>
+  </div>
 
   <!-- Main Application Bootstrapper -->
   <script type="module" src="./js/app.js"></script>
