@@ -92,22 +92,17 @@ export async function updateUserProfile(userId, profileData) {
  * --- ADMIN FUNCTIONS ---
  */
 export async function getAllUsersForAdmin() {
-  let localCache = [];
-  try {
-    localCache = JSON.parse(localStorage.getItem('motigo_registered_users') || '[]');
-  } catch (e) {}
-
-  let rawList = [...localCache];
+  let rawList = [];
 
   if (db) {
     try {
-      let snapshot = await db.collection('admin_user_registry').get();
+      let snapshot = await db.collection('users').get();
       if (!snapshot || snapshot.empty) {
-        snapshot = await db.collection('users').get();
+        snapshot = await db.collection('admin_user_registry').get();
       }
 
       if (snapshot && !snapshot.empty) {
-        const firestoreDocs = await Promise.all(snapshot.docs.map(async (userDoc) => {
+        rawList = await Promise.all(snapshot.docs.map(async (userDoc) => {
           const uData = userDoc.data();
           const uId = userDoc.id;
           let vehicles = [];
@@ -119,16 +114,19 @@ export async function getAllUsersForAdmin() {
           } catch (e) {}
           return { id: uId, ...uData, vehicles };
         }));
-
-        const mergedMap = new Map();
-        rawList.forEach(u => mergedMap.set(u.id || u.email, u));
-        firestoreDocs.forEach(u => mergedMap.set(u.id || u.email, u));
-        rawList = Array.from(mergedMap.values());
       }
     } catch (err) {
       console.warn('Firestore admin query notice:', err);
     }
   }
+
+  try {
+    const localCache = JSON.parse(localStorage.getItem('motigo_registered_users') || '[]');
+    const mergedMap = new Map();
+    localCache.forEach(u => mergedMap.set(u.id || u.email, u));
+    rawList.forEach(u => mergedMap.set(u.id || u.email, u));
+    rawList = Array.from(mergedMap.values());
+  } catch (e) {}
 
   return rawList.map(u => {
     const firstName = u.firstName || 'User';
