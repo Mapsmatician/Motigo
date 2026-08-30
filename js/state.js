@@ -22,6 +22,7 @@ class StateStore {
     this.STORAGE_KEY_LEGACY = 'motigo_app_state_v2';
     this.CHAT_KEY = 'motigo_ai_chat_v2';
     this.subscribers = [];
+    this._user = { ...initialUser };
     this.isAdmin = false;
     this.adminUser = null;
     this.isAuthLoading = true;
@@ -30,7 +31,7 @@ class StateStore {
     this.unsubRecords = null;
     this.unsubNotifications = null;
 
-    this.resetToDefaults();
+    this.loadState();
     this.initFirebaseAuth();
   }
 
@@ -64,6 +65,7 @@ class StateStore {
         this.isLoggedIn = false;
         this.isAdmin = false;
         this.adminUser = null;
+        this.user = { ...initialUser };
         this.detachDbListeners();
         this.vehicles = [];
         this.records = [];
@@ -74,6 +76,14 @@ class StateStore {
       }
       this.notify();
     });
+  }
+
+  get user() {
+    return this._user || initialUser;
+  }
+
+  set user(val) {
+    this._user = val || initialUser;
   }
 
   attachDbListeners(userId) {
