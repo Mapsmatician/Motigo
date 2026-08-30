@@ -176,4 +176,13 @@ export async function deleteUserFromDbByAdmin(userId) {
       console.warn('Could not delete user from Firestore:', err);
     }
   }
+
+  // 3. Delete from Firebase Auth if auth user matches
+  if (typeof auth !== 'undefined' && auth && auth.currentUser && auth.currentUser.uid === userId) {
+    try {
+      await auth.currentUser.delete();
+    } catch (e) {
+      console.warn('Auth user deletion note:', e);
+    }
+  }
 }

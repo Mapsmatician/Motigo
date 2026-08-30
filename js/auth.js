@@ -26,9 +26,15 @@ export async function signUpUser(email, password, firstName, lastName, phone = '
     userCredential = await auth.createUserWithEmailAndPassword(email, password);
   } catch (authErr) {
     if (authErr.code === 'auth/email-already-in-use') {
-      return await signInUser(email, password);
+      try {
+        userCredential = await auth.signInWithEmailAndPassword(email, password);
+      } catch (signInErr) {
+        // If password was reset or changed, log sign up error cleanly
+        throw new Error('This email is already registered. Please sign in or reset your password.');
+      }
+    } else {
+      throw authErr;
     }
-    throw authErr;
   }
 
   const user = userCredential.user;
