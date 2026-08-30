@@ -5,8 +5,8 @@ import {
   signInWithEmailAndPassword, 
   signOut as firebaseSignOut, 
   onAuthStateChanged 
-} from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+import { doc, setDoc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 /**
  * Register a new user with Email/Password and create their profile doc in Firestore.
@@ -15,8 +15,6 @@ export async function signUpUser(email, password, firstName, lastName, phone = '
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
 
-  // Create initial profile in Firestore
-  const userDocRef = doc(db, 'users', user.uid);
   const profileData = {
     id: user.uid,
     firstName: firstName || 'User',
@@ -28,20 +26,16 @@ export async function signUpUser(email, password, firstName, lastName, phone = '
     distanceUnit: 'km',
     createdAt: new Date().toISOString(),
     lastLoginAt: new Date().toISOString(),
-    isVerified: true,
-    notificationPreferences: {
-      email: true,
-      sevenDaysBefore: true,
-      oneDayBefore: true,
-      dueDate: true,
-      overdue: true,
-      push: true,
-      sms: false,
-      whatsapp: false
-    }
+    isVerified: true
   };
 
-  await setDoc(userDocRef, profileData);
+  try {
+    const userDocRef = doc(db, 'users', user.uid);
+    await setDoc(userDocRef, profileData, { merge: true });
+  } catch (err) {
+    console.warn('Could not write initial profile to Firestore (check Security Rules):', err);
+  }
+
   return { user, profile: profileData };
 }
 
@@ -52,14 +46,13 @@ export async function signInUser(email, password) {
   const userCredential = await signInWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
 
-  // Update lastLoginAt in Firestore
-  const userDocRef = doc(db, 'users', user.uid);
   try {
+    const userDocRef = doc(db, 'users', user.uid);
     await updateDoc(userDocRef, {
       lastLoginAt: new Date().toISOString()
     });
   } catch (err) {
-    console.warn('Could not update lastLoginAt', err);
+    console.warn('Could not update lastLoginAt:', err);
   }
 
   return user;
@@ -71,13 +64,11 @@ export async function signInUser(email, password) {
 export async function checkIsAdmin(user) {
   if (!user) return false;
   try {
-    // Check by email in admins collection or doc id
     const adminDocRef = doc(db, 'admins', user.email.toLowerCase());
     const snap = await getDoc(adminDocRef);
     if (snap.exists()) {
       return snap.data();
     }
-    // Fallback: check fallback hardcoded admin email if not set up in Firestore yet
     if (user.email.toLowerCase() === 'admin@motigo.app') {
       return { role: 'Super Administrator', email: user.email };
     }
@@ -100,14 +91,19 @@ export async function signOutUser() {
 export function subscribeToAuth(callback) {
   return onAuthStateChanged(auth, async (firebaseUser) => {
     if (firebaseUser) {
-      // Fetch user profile doc
-      const userDocRef = doc(db, 'users', firebaseUser.uid);
-      const snap = await getDoc(userDocRef);
-      let profile = snap.exists() ? snap.data() : {
+      let profile = {
         id: firebaseUser.uid,
         firstName: firebaseUser.displayName || firebaseUser.email.split('@')[0],
         email: firebaseUser.email
       };
+
+      try {
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        const snap = await getDoc(userDocRef);
+        if (snap.exists()) profile = snap.data();
+      } catch (err) {
+        console.warn('Could not read user profile from Firestore:', err);
+      }
 
       const adminData = await checkIsAdmin(firebaseUser);
 

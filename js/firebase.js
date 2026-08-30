@@ -1,10 +1,7 @@
-// Motigo — Firebase Initialisation
-// All other modules import { auth, db } from './firebase.js'
-
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getAnalytics } from 'firebase/analytics';
+// Motigo — Firebase Initialisation (Robust Direct CDN Imports)
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCtYyuEFPXMSwQmOclFL1-T10wbLP5llzs",
@@ -20,8 +17,3 @@ const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const db   = getFirestore(app);
-
-// Analytics — only in browser, not during Netlify build
-if (typeof window !== 'undefined') {
-  try { getAnalytics(app); } catch (_) { /* safe to skip */ }
-}

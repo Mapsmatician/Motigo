@@ -4,6 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Motigo — Your car's personal maintenance assistant</title>
+
+  <!-- Firebase v10 ES Modules Import Map -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
+      }
+    }
+  </script>
+
   <meta name="description" content="Motigo helps vehicle owners understand, track, schedule and manage vehicle maintenance with automated reminders and personalized AI guidance." />
   
   <!-- Modern Font Family (Plus Jakarta Sans & JetBrains Mono) -->
@@ -16,18 +28,6 @@
   <link rel="stylesheet" href="./css/dashboard.css" />
   <link rel="stylesheet" href="./css/ai-assistant.css" />
   <link rel="stylesheet" href="./css/components.css" />
-
-  <!-- Firebase v10 ES Modules Import Map -->
-  <script type="importmap">
-    {
-      "imports": {
-        "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
-        "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
-        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
-        "firebase/analytics": "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js"
-      }
-    }
-  </script>
 </head>
 <body>
   <div id="app-root"></div>

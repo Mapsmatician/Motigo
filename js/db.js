@@ -1,17 +1,14 @@
-// Motigo — Firestore Database CRUD Layer
+// Motigo — Firestore Database CRUD Layer (Robust Direct CDN Imports)
 import { db } from './firebase.js';
 import { 
   collection, 
   doc, 
   setDoc, 
-  getDoc, 
   getDocs, 
   updateDoc, 
   deleteDoc, 
-  onSnapshot, 
-  query, 
-  orderBy 
-} from 'firebase/firestore';
+  onSnapshot 
+} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 /**
  * --- VEHICLES ---
@@ -54,7 +51,6 @@ export function listenToRecords(userId, callback) {
       id: docSnap.id,
       ...docSnap.data()
     }));
-    // Sort descending by date
     records.sort((a, b) => new Date(b.date) - new Date(a.date));
     callback(records);
   }, (err) => {
@@ -106,7 +102,6 @@ export async function updateUserProfile(userId, profileData) {
 
 /**
  * --- ADMIN FUNCTIONS ---
- * Fetch all registered users and their vehicles for the Admin Portal
  */
 export async function getAllUsersForAdmin() {
   try {
@@ -117,7 +112,6 @@ export async function getAllUsersForAdmin() {
       const uData = userDoc.data();
       const uId = userDoc.id;
 
-      // Fetch user's vehicles subcollection
       const vehRef = collection(db, 'users', uId, 'vehicles');
       const vehSnap = await getDocs(vehRef);
       const vehicles = vehSnap.docs.map(v => v.data());
