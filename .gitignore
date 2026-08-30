@@ -1,0 +1,11 @@
+# Dependencies & Temp
+node_modules/
+.env
+.env.local
+.DS_Store
+
+# Local dev server script
+serve.ps1
+
+# Gemini IDE directory
+.gemini/
