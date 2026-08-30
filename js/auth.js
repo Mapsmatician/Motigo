@@ -77,6 +77,16 @@ export async function signUpUser(email, password, firstName, lastName, phone = '
     sendWelcomeEmail(email, firstName);
   } catch (e) {}
 
+  // Trigger Firebase Auth native verification email to inbox
+  if (userCredential && userCredential.user && typeof userCredential.user.sendEmailVerification === 'function') {
+    try {
+      await userCredential.user.sendEmailVerification();
+      console.log('Firebase verification email dispatched to inbox:', email);
+    } catch (e) {
+      console.warn('Firebase sendEmailVerification notice:', e);
+    }
+  }
+
   return { user, profile: profileData };
 }
 
