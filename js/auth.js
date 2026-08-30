@@ -58,6 +58,10 @@ export async function signUpUser(email, password, firstName, lastName, phone = '
     console.warn('Could not write profile to Firestore:', err);
   }
 
+  try {
+    sendWelcomeEmail(email, firstName);
+  } catch (e) {}
+
   return { user, profile: profileData };
 }
 
@@ -210,4 +214,18 @@ export function subscribeToAuth(callback) {
       });
     }
   });
+}
+
+export function sendWelcomeEmail(email, firstName = 'Vehicle Owner') {
+  if (!email) return;
+  try {
+    const subject = encodeURIComponent('Welcome to Motigo — Your Car\'s Personal Maintenance Assistant 🚗');
+    const body = encodeURIComponent(`Hi ${firstName},\n\nWelcome to Motigo! We’re thrilled to help you keep your vehicle running smoothly, safely, and cost-effectively.\n\nWith Motigo, you can:\n- Never miss a service with automated date and mileage-based reminders\n- Access personalized vehicle specs and AI-powered diagnostic guidance\n- Maintain a complete service history for higher resale value\n\nGet started by adding your first vehicle to your garage!\n\nBest regards,\nThe Motigo Team`);
+    const mailtoUrl = `mailto:${email}?subject=${subject}&body=${body}`;
+    if (typeof window !== 'undefined') {
+      window.open(mailtoUrl, '_blank');
+    }
+  } catch (e) {
+    console.warn('Welcome email trigger notice:', e);
+  }
 }
