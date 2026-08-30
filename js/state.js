@@ -423,7 +423,7 @@ class StateStore {
     this.saveState();
   }
 
-  completeOnboarding() {
+  async completeOnboarding() {
     const data = this.onboarding.data;
     
     // Create new vehicle from onboarding
