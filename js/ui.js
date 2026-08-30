@@ -940,7 +940,8 @@ export class UIRenderer {
 
     const resendBtn = document.getElementById('btn-resend-code');
     if (resendBtn) {
-      resendBtn.addEventListener('click', () => {
+      resendBtn.addEventListener('click', (e) => {
+        e.preventDefault();
         store.verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
         const errBox = document.getElementById('verify-code-error');
         if (errBox) {
@@ -948,9 +949,8 @@ export class UIRenderer {
           errBox.style.background = 'rgba(16, 185, 129, 0.15)';
           errBox.style.borderColor = 'rgba(16, 185, 129, 0.4)';
           errBox.style.color = '#34d399';
-          errBox.innerHTML = `📩 A new 6-digit code has been generated for ${store.user?.email || 'your email'}.`;
+          errBox.innerHTML = `📩 A new 6-digit confirmation code has been generated and dispatched to <strong>${store.user?.email || 'your email'}</strong>.`;
         }
-        store.notify();
       });
     }
 
