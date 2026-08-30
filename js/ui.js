@@ -745,15 +745,9 @@ export class UIRenderer {
         <div class="auth-card" style="text-align: center; max-width: 480px;">
           <div style="font-size: 48px; margin-bottom: 12px;">✉️</div>
           <h2 style="font-size: 24px; font-weight: 800; color: #ffffff;">Verify Your Email</h2>
-          <p style="font-size: 14px; color: var(--text-secondary); margin: 8px 0 16px; line-height: 1.6;">
+          <p style="font-size: 14px; color: var(--text-secondary); margin: 8px 0 24px; line-height: 1.6;">
             We've sent a 6-digit confirmation code to <strong>${userEmail}</strong>. Please check your email inbox, copy the code, and enter it below.
           </p>
-
-          <div style="margin-bottom: 20px;">
-            <a href="${mailtoUrl}" target="_blank" class="btn btn-secondary" style="font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;">
-              <span>📩 Open Email Client (${userEmail})</span>
-            </a>
-          </div>
 
           <div id="verify-code-error" style="display:none; color:#fca5a5; font-size:13px; margin-bottom:16px; padding: 10px 12px; background: rgba(239,68,68,0.15); border-radius: 8px; border: 1px solid rgba(239,68,68,0.4);">
           </div>
