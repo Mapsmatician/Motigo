@@ -6,11 +6,19 @@
   <title>Motigo — Your car's personal maintenance assistant</title>
   <meta name="description" content="Motigo helps vehicle owners understand, track, schedule and manage vehicle maintenance with automated reminders and personalized AI guidance." />
 
-  <!-- Global Error Handler -->
+  <!-- Global Diagnostic Error Handler -->
   <script>
-    window.addEventListener('error', function(e) {
-      console.error('Motigo Global Error:', e);
-    });
+    window.onerror = function(msg, url, line, col, error) {
+      console.error('Motigo Error:', msg, url, line, error);
+      var root = document.getElementById('app-root');
+      if (root && root.innerHTML.indexOf('Loading Motigo') !== -1) {
+        root.innerHTML = '<div style="min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#0b0f19; color:#ef4444; font-family:sans-serif; text-align:center; padding:20px;">' +
+          '<h2 style="font-size:22px; font-weight:800; color:#f87171;">⚠️ Motigo Initialization Error</h2>' +
+          '<p style="color:#fca5a5; max-width:500px; margin:12px 0 20px; font-size:13px; background:rgba(239,68,68,0.1); padding:12px; border-radius:8px; border:1px solid rgba(239,68,68,0.3);">' + msg + '</p>' +
+          '<button onclick="location.reload()" style="background:#2563eb; color:#fff; border:none; padding:10px 24px; border-radius:8px; cursor:pointer; font-weight:700;">Refresh Page</button>' +
+          '</div>';
+      }
+    };
   </script>
 
   <!-- Firebase v10 Compat Libraries -->
@@ -44,7 +52,37 @@
     </div>
   </div>
 
-  <!-- Main Application Bootstrapper -->
-  <script type="module" src="./js/app.js"></script>
+  <!-- Direct Application Bootstrapper -->
+  <script type="module">
+    import { store } from './js/state.js';
+    import { UIRenderer } from './js/ui.js';
+
+    function initApp() {
+      try {
+        const ui = new UIRenderer();
+        ui.render();
+
+        store.subscribe(() => {
+          ui.render();
+        });
+      } catch (err) {
+        console.error('Motigo Bootstrapper Error:', err);
+        var root = document.getElementById('app-root');
+        if (root) {
+          root.innerHTML = '<div style="min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#0b0f19; color:#ef4444; font-family:sans-serif; text-align:center; padding:20px;">' +
+            '<h2 style="font-size:22px; font-weight:800; color:#f87171;">⚠️ Motigo Render Exception</h2>' +
+            '<p style="color:#fca5a5; max-width:500px; margin:12px 0 20px; font-size:13px; background:rgba(239,68,68,0.1); padding:12px; border-radius:8px; border:1px solid rgba(239,68,68,0.3);">' + err.message + '</p>' +
+            '<button onclick="location.reload()" style="background:#2563eb; color:#fff; border:none; padding:10px 24px; border-radius:8px; cursor:pointer; font-weight:700;">Refresh Page</button>' +
+            '</div>';
+        }
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
+  </script>
 </body>
 </html>
