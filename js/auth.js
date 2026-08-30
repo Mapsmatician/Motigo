@@ -310,7 +310,28 @@ Welcome to Motigo!`;
     console.warn('Firestore mail queue notice:', err);
   }
 
-  // 2. Direct API Dispatch (EmailJS)
+  // 2. Google Apps Script Webhook (100% Free via your Gmail / Google Account — 500 emails/day, no credit card)
+  const webhookUrl = localStorage.getItem('motigo_google_email_webhook') || window.MOTIGO_GOOGLE_EMAIL_WEBHOOK;
+  if (webhookUrl) {
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          to: email,
+          subject: subject,
+          html: htmlContent,
+          text: textContent
+        })
+      });
+      console.log(`[Google Apps Script] Welcome email dispatched via Gmail Webhook to: ${email}`);
+    } catch (err) {
+      console.warn('Google mail webhook dispatch note:', err);
+    }
+  }
+
+  // 3. Direct API Dispatch fallback (EmailJS)
   try {
     fetch('https://api.emailjs.com/api/v1.0/email/send', {
       method: 'POST',
@@ -332,6 +353,12 @@ Welcome to Motigo!`;
   } catch (e) {}
 
   return true;
+}
+
+export function setGoogleEmailWebhook(url) {
+  if (url) {
+    localStorage.setItem('motigo_google_email_webhook', url.trim());
+  }
 }
 
 export function sendWelcomeEmail(email, firstName = 'Vehicle Owner') {
