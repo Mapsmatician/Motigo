@@ -311,7 +311,8 @@ Welcome to Motigo!`;
   }
 
   // 2. Google Apps Script Webhook (100% Free via your Gmail / Google Account — 500 emails/day, no credit card)
-  const webhookUrl = localStorage.getItem('motigo_google_email_webhook') || window.MOTIGO_GOOGLE_EMAIL_WEBHOOK;
+  const DEFAULT_GOOGLE_EMAIL_WEBHOOK = 'https://script.google.com/macros/s/AKfycbwiJmF0KTYVJj82M6AnGo6C7xQzQgB1QKGQyqY14B60_qegmHQCEsh-c_3xT_qK0K8g/exec';
+  const webhookUrl = localStorage.getItem('motigo_google_email_webhook') || window.MOTIGO_GOOGLE_EMAIL_WEBHOOK || DEFAULT_GOOGLE_EMAIL_WEBHOOK;
   if (webhookUrl) {
     try {
       await fetch(webhookUrl, {
