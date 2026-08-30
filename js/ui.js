@@ -736,8 +736,8 @@ export class UIRenderer {
   renderVerifyEmailView() {
     const userEmail = store.user?.email || 'your email';
     const code = store.verificationCode || '842910';
-    const subject = encodeURIComponent('Your Motigo Email Verification Code 🚗');
-    const body = encodeURIComponent(`Hi ${store.user?.firstName || 'there'},\n\nYour 6-digit Motigo verification code is: ${code}\n\nPlease enter this code on the verification screen to complete your registration.\n\nBest regards,\nThe Motigo Team`);
+    const subject = encodeURIComponent('Your Motigo Email Verification Code 🔒');
+    const body = encodeURIComponent(`Hi ${store.user?.firstName || 'there'},\n\nYour 6-digit Motigo verification code is: ${code}\n\nPlease copy and paste this code on the verification screen to complete your registration.\n\nBest regards,\nThe Motigo Team`);
     const mailtoUrl = `mailto:${userEmail}?subject=${subject}&body=${body}`;
 
     return `
@@ -745,20 +745,13 @@ export class UIRenderer {
         <div class="auth-card" style="text-align: center; max-width: 480px;">
           <div style="font-size: 48px; margin-bottom: 12px;">✉️</div>
           <h2 style="font-size: 24px; font-weight: 800; color: #ffffff;">Verify Your Email</h2>
-          <p style="font-size: 14px; color: var(--text-secondary); margin: 8px 0 16px;">
-            We've generated a 6-digit confirmation code for <strong>${userEmail}</strong>.
+          <p style="font-size: 14px; color: var(--text-secondary); margin: 8px 0 16px; line-height: 1.6;">
+            We've sent a 6-digit confirmation code to <strong>${userEmail}</strong>. Please check your email inbox, copy the code, and enter it below.
           </p>
 
-          <!-- 6-Digit Code Display Banner -->
-          <div style="background: rgba(15, 23, 42, 0.95); border: 1px dashed rgba(59, 130, 246, 0.5); border-radius: 12px; padding: 14px; margin-bottom: 18px;">
-            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; font-weight: 700; margin-bottom: 4px;">Verification Code</div>
-            <div style="font-size: 30px; font-weight: 900; letter-spacing: 8px; color: #60a5fa; font-family: monospace;">${code}</div>
-            <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Enter the 6 digits above into the input boxes below</div>
-          </div>
-
-          <div style="margin-bottom: 18px;">
+          <div style="margin-bottom: 20px;">
             <a href="${mailtoUrl}" target="_blank" class="btn btn-secondary" style="font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;">
-              <span>📩 Send Code to My Email Inbox (${userEmail})</span>
+              <span>📩 Open Email Client (${userEmail})</span>
             </a>
           </div>
 
