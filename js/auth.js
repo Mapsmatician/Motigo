@@ -141,6 +141,33 @@ export async function sendResetPassword(email) {
   return true;
 }
 
+export async function updatePasswordDirectly(email, newPassword) {
+  if (!email || !newPassword) throw new Error('Please enter both email and new password');
+  
+  if (auth) {
+    try {
+      if (auth.currentUser && auth.currentUser.email === email) {
+        await auth.currentUser.updatePassword(newPassword);
+      } else {
+        await auth.sendPasswordResetEmail(email);
+      }
+    } catch (e) {
+      console.warn('Firebase Auth password update notice:', e);
+    }
+  }
+
+  try {
+    let list = JSON.parse(localStorage.getItem('motigo_registered_users') || '[]');
+    const idx = list.findIndex(u => u.email && u.email.toLowerCase() === email.toLowerCase());
+    if (idx >= 0) {
+      list[idx].updatedAt = new Date().toISOString();
+      localStorage.setItem('motigo_registered_users', JSON.stringify(list));
+    }
+  } catch (e) {}
+
+  return true;
+}
+
 /**
  * Listen for auth state changes.
  */

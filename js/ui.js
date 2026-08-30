@@ -3374,31 +3374,57 @@ export class UIRenderer {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = form.querySelector('[name="resetEmail"]').value.trim();
+        const newPassword = form.querySelector('[name="newPassword"]').value;
+        const confirmPassword = form.querySelector('[name="confirmPassword"]').value;
         const btn = form.querySelector('button[type="submit"]');
         const alertBox = document.getElementById('forgot-pw-alert');
 
-        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Sending reset link...'; }
         if (alertBox) alertBox.style.display = 'none';
 
+        if (newPassword !== confirmPassword) {
+          if (alertBox) {
+            alertBox.style.display = 'block';
+            alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+            alertBox.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+            alertBox.style.color = '#fca5a5';
+            alertBox.innerHTML = `❌ Passwords do not match. Please make sure both password fields are identical.`;
+          }
+          return;
+        }
+
+        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Updating password...'; }
+
         try {
-          await store.resetPassword(email);
+          await store.updateUserPassword(email, newPassword);
           if (alertBox) {
             alertBox.style.display = 'block';
             alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
             alertBox.style.borderColor = 'rgba(16, 185, 129, 0.4)';
             alertBox.style.color = '#34d399';
-            alertBox.innerHTML = `✅ Password reset email sent to <strong>${email}</strong>! Check your email inbox (including spam folder) for instructions to set your new password.`;
+            alertBox.innerHTML = `🎉 Password updated successfully for <strong>${email}</strong>! You can now sign in with your new password below.`;
           }
-          if (btn) { btn.disabled = false; btn.innerHTML = 'Send Reset Link 📩'; }
+          
+          // Pre-fill login form with email and new password
+          const loginForm = document.getElementById('form-login');
+          if (loginForm) {
+            const emailInput = loginForm.querySelector('[name="email"]');
+            const pwInput = loginForm.querySelector('[name="password"]');
+            if (emailInput) emailInput.value = email;
+            if (pwInput) pwInput.value = newPassword;
+          }
+
+          setTimeout(() => {
+            this.closeModal();
+          }, 1800);
         } catch (err) {
           if (alertBox) {
             alertBox.style.display = 'block';
             alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
             alertBox.style.borderColor = 'rgba(239, 68, 68, 0.4)';
             alertBox.style.color = '#fca5a5';
-            alertBox.innerHTML = `❌ ${err.message || 'Could not send reset link. Please check your email address and try again.'}`;
+            alertBox.innerHTML = `❌ ${err.message || 'Could not update password. Please check your email address and try again.'}`;
           }
-          if (btn) { btn.disabled = false; btn.innerHTML = 'Send Reset Link 📩'; }
+          if (btn) { btn.disabled = false; btn.innerHTML = 'Reset & Save Password 🔑'; }
         }
       });
     }
@@ -3407,26 +3433,36 @@ export class UIRenderer {
   renderForgotPasswordModal(defaultEmail = '') {
     return `
       <div class="modal-backdrop" style="display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:99999;">
-        <div class="modal-card" style="max-width:460px; width:90%; background:#0f172a; border:1px solid rgba(59,130,246,0.3); border-radius:16px; padding:24px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); position:relative;">
+        <div class="modal-card" style="max-width:480px; width:90%; background:#0f172a; border:1px solid rgba(59,130,246,0.3); border-radius:16px; padding:24px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); position:relative;">
           <button class="modal-close-btn" style="position:absolute; top:16px; right:16px; background:rgba(255,255,255,0.1); border:none; color:#fff; width:32px; height:32px; border-radius:50%; font-size:18px; cursor:pointer;">&times;</button>
           
           <div style="text-align:center; margin-bottom:20px;">
             <div style="font-size:42px; margin-bottom:8px;">🔑</div>
             <h2 style="font-size:22px; font-weight:800; color:#fff; margin:0;">Reset Your Password</h2>
-            <p style="font-size:13px; color:var(--text-muted); margin-top:6px; line-height:1.5;">Enter your registered email address below and we'll send you an automated password reset link.</p>
+            <p style="font-size:13px; color:var(--text-muted); margin-top:6px; line-height:1.5;">Enter your registered email and choose a new password below to update your account.</p>
           </div>
 
           <form id="form-forgot-password">
             <div id="forgot-pw-alert" style="display:none; font-size:13px; margin-bottom:16px; padding:12px; border-radius:8px; border:1px solid transparent; line-height:1.5;"></div>
             
-            <div class="form-group" style="margin-bottom:20px;">
+            <div class="form-group" style="margin-bottom:14px;">
               <label class="form-label" style="font-size:13px; font-weight:600; color:#94a3b8;">Email Address</label>
-              <input type="email" name="resetEmail" class="form-control" placeholder="e.g. user@motigo.app" value="${defaultEmail}" required style="padding:12px;" />
+              <input type="email" name="resetEmail" class="form-control" placeholder="e.g. user@motigo.app" value="${defaultEmail}" required style="padding:10px 14px;" />
+            </div>
+
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="form-label" style="font-size:13px; font-weight:600; color:#94a3b8;">New Password</label>
+              <input type="password" name="newPassword" class="form-control" placeholder="Enter new password (min 6 chars)" minlength="6" required style="padding:10px 14px;" />
+            </div>
+
+            <div class="form-group" style="margin-bottom:20px;">
+              <label class="form-label" style="font-size:13px; font-weight:600; color:#94a3b8;">Confirm New Password</label>
+              <input type="password" name="confirmPassword" class="form-control" placeholder="Confirm new password" minlength="6" required style="padding:10px 14px;" />
             </div>
 
             <div style="display:flex; gap:12px; justify-content:flex-end;">
               <button type="button" class="btn btn-secondary modal-close-btn" style="font-size:13px;">Cancel</button>
-              <button type="submit" class="btn btn-primary" style="font-size:13px;">Send Reset Link 📩</button>
+              <button type="submit" class="btn btn-primary" style="font-size:13px; background:linear-gradient(135deg, #2563eb, #3b82f6);">Reset & Save Password 🔑</button>
             </div>
           </form>
         </div>

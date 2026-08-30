@@ -1,6 +1,6 @@
 import { initialVehicles, initialMaintenanceRecords, initialNotifications, initialUser, adminCredentials, mockUserRegistry } from './mockData.js';
 import { calculateVehicleStatus, calculateNextDueDate } from './maintenanceEngine.js';
-import { signUpUser, signInUser, signOutUser, subscribeToAuth, sendResetPassword } from './auth.js';
+import { signUpUser, signInUser, signOutUser, subscribeToAuth, sendResetPassword, updatePasswordDirectly } from './auth.js';
 import { 
   listenToVehicles, 
   saveVehicleToDb, 
@@ -410,6 +410,16 @@ class StateStore {
       return true;
     } catch (err) {
       console.error('Password reset error:', err);
+      throw err;
+    }
+  }
+
+  async updateUserPassword(email, newPassword) {
+    try {
+      await updatePasswordDirectly(email, newPassword);
+      return true;
+    } catch (err) {
+      console.error('Update password error:', err);
       throw err;
     }
   }
